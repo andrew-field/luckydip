@@ -20,3 +20,11 @@ EXPOSE 1234
 
 # Run
 CMD ["/pickmypostcode"]
+
+# sudo systemctl start docker
+# sudo docker build -t pick .
+# sudo docker run -m=2gb -p 1234:1234 pick The -p option is coupled with browser.ServeMonitor("0.0.0.0:1234") in main
+# sudo docker images
+# sudo docker container prune
+# sudo docker image rm pick
+# sudo docker image prune

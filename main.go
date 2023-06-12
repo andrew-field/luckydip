@@ -81,8 +81,8 @@ func main() {
 	}
 
 	// Login for each client and collect bonus (First client already completed earlier when fetching postcodes).
-	for i := range people[1:] {
-		LoginAndGetBonus(&people[i+1], &errs)
+	for i := range people {
+		LoginAndGetBonus(&people[i], &errs)
 	}
 
 	body := fmt.Sprintf(formatResults(people) + "\n\n" + formatPostcodes(postcodesToday))
@@ -105,6 +105,7 @@ func GetPostcodes(client *person) (postcodes, error) {
 	defer browser.MustClose()
 
 	// launcher.Open(browser.ServeMonitor("0.0.0.0:1234"))
+	//browser.ServeMonitor("0.0.0.0:1234") // This can be coupled with -p 1234:1234 in the dockerfile
 
 	// An effort to avoid bot detection.
 	page := stealth.MustPage(browser)
@@ -125,7 +126,7 @@ func GetPostcodes(client *person) (postcodes, error) {
 	//Main draw
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 	page.MustElement("#v-main-header > div > nav > a") // Wait for definite login
-	el := page.MustElement("#result > div > div.result--header > p.result--postcode")
+	el := page.MustElement("#main-draw-header > div > div > p.result--postcode")
 	postcode, err := getPostcodeFromText(el.MustText())
 	if err != nil {
 		errs = errors.New("Error while fetching the main postcode. " + err.Error())
@@ -234,19 +235,7 @@ func GetPostcodes(client *person) (postcodes, error) {
 		}
 	}
 
-	// Populate bonus money for the first client while here. For some reason this doesn't always load properly. Loop until it does.
-	for i := 0; ; i++ {
-		el = page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success")
-		if len(el.MustText()) < 10 {
-			break
-		}
-		if i > 10 {
-			errs = errors.Join(errs, errors.New("Error while fetching the bonus money for "+client.Name+". Time out. "+"Bonus text: "+el.MustText()))
-			break
-		}
-		time.Sleep(1 * time.Second)
-	}
-	client.Bonus = el.MustText()
+	// One could populate the bonus money for the first client here. For sake of simplicity and organisation, do not.
 
 	return postcodesToday, errs
 }
