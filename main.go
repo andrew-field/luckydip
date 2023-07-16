@@ -113,99 +113,62 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
 	page.MustWaitStable()
 
+	postcodesToday := postcodes{}
+	var err error
+
 	//Main draw
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 	el := page.MustElement("#main-draw-header > div > div > p.result--postcode")
-	postcode, err := getPostcodeFromText(el.MustText())
-	if err != nil {
+	if postcodesToday.Main, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the main postcode. "+err.Error()))
 	}
-	postcodesToday := postcodes{Main: postcode}
 
+	//Video
 	page.MustNavigate("https://pickmypostcode.com/video/")
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 	el = page.MustElement("#result-header > div > p.result--postcode")
-	postcode, err = getPostcodeFromText(el.MustText())
-	if err != nil {
+	if postcodesToday.Video, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the video postcode. "+err.Error()))
 	}
-	postcodesToday.Video = postcode
 
+	//Survey draw
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/")
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 	page.MustElement("#result-survey > div:nth-child(1) > div > div > div.survey-buttons > button.btn.btn-secondary").MustClick()
 	el = page.MustElement("#result-header > div > p.result--postcode")
-	postcode, err = getPostcodeFromText(el.MustText())
-	if err != nil {
+	if postcodesToday.Survey, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the survey postcode. "+err.Error()))
 	}
-	postcodesToday.Survey = postcode
 
-	// For some reason these stackpot postcodes don't load properly all the time. Loop until they are loaded properly.
-	page.MustNavigate("https://pickmypostcode.com/stackpot/").MustWaitLoad()
+	//Stackpot
+	page.MustNavigate("https://pickmypostcode.com/stackpot/").MustWaitStable()
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
-	time.Sleep(3 * time.Second) // Initial sleep to give unknown number of elements a chance to load
-	runAgain := true
-	for i := 0; runAgain; i++ {
-		runAgain = false
-		result := page.MustElements("p.result--postcode")
-		for _, el := range result {
-			postcode, err = getPostcodeFromText(el.MustText())
-			if err != nil {
-				if i > 10 {
-					*errs = errors.Join(*errs, errors.New("Error while fetching the stackpot postcodes. Time out. "+err.Error()))
-				}
-				runAgain = true
-				postcodesToday.Stackpot = make([]string, 0)
-				time.Sleep(1 * time.Second)
-				break
-			}
-			postcodesToday.Stackpot = append(postcodesToday.Stackpot, postcode)
+	stackpotPostcodes := page.MustElements("p.result--postcode")
+	postcodesToday.Stackpot = make([]string, len(stackpotPostcodes))
+	for i, el := range stackpotPostcodes {
+		if postcodesToday.Stackpot[i], err = getPostcodeFromText(el.MustText()); err != nil {
+			*errs = errors.Join(*errs, errors.New("Error while fetching the stackpot postcodes. "+err.Error()))
 		}
 	}
 
-	// For some reason these bonus postcodes don't load properly all the time. Loop until they are loaded properly.
+	// Bonus
 	postcodesToday.Bonus = make([]string, 3)
-	page.MustNavigate("https://pickmypostcode.com/your-bonus/").MustWaitLoad()
+	page.MustNavigate("https://pickmypostcode.com/your-bonus/").MustWaitStable()
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
-	for i := 0; ; i++ {
-		el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
-		if postcode, err = getPostcodeFromText(el.MustText()); err == nil {
-			postcodesToday.Bonus[0] = postcode
-			break
-		}
-		if i > 10 {
-			*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 5 postcode. Time out. "+err.Error()))
-			break
-		}
-		time.Sleep(1 * time.Second)
+	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
+	if postcodesToday.Bonus[0], err = getPostcodeFromText(el.MustText()); err != nil {
+		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 5 postcode. "+err.Error()))
 	}
 
-	for i := 0; ; i++ {
-		el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-ten > div > div.result--header > p")
-		if postcode, err = getPostcodeFromText(el.MustText()); err == nil {
-			postcodesToday.Bonus[1] = postcode
-			break
-		}
-		if i > 10 {
-			*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 10 postcode. Time out. "+err.Error()))
-			break
-		}
-		time.Sleep(1 * time.Second)
+	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-ten > div > div.result--header > p")
+	if postcodesToday.Bonus[1], err = getPostcodeFromText(el.MustText()); err != nil {
+		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 10 postcode. "+err.Error()))
 	}
 
-	// for i := 0; ; i++ {
 	// 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-twenty > div > div.result--header > p")
-	// 	if postcode, err = getPostcodeFromText(el.MustText()); err == nil {
-	//      postcodesToday.Bonus[2] = postcode
-	// 		break
+	// 	if postcodesToday.Bonus[2], err = getPostcodeFromText(el.MustText()); err != nil {
+	//      *errs = errors.Join(*errs, errors.New("Error while fetching the bonus 20 postcode. "+err.Error()))
 	// 	}
-	// 	if i > 10 {
-	// 		errs = errors.Join(errs, errors.New("Error while fetching the bonus 20 postcode. Time out. "+err.Error()))
-	// 		break
-	// 	}
-	// 	time.Sleep(1 * time.Second)
-	// }
 
 	loc, err := time.LoadLocation("Europe/London")
 	if err != nil {
@@ -215,17 +178,9 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 
 		// Check if it's after 18:00 in London
 		if currentTime.Hour() >= 18 {
-			for i := 0; ; i++ {
-				el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
-				if postcode, err = getPostcodeFromText(el.MustText()); err == nil {
-					postcodesToday.Minidraw = postcode
-					break
-				}
-				if i > 10 {
-					*errs = errors.Join(*errs, errors.New("Error while fetching the minidraw postcode. Time out. "+err.Error()))
-					break
-				}
-				time.Sleep(1 * time.Second)
+			el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
+			if postcodesToday.Minidraw, err = getPostcodeFromText(el.MustText()); err != nil {
+				*errs = errors.Join(*errs, errors.New("Error while fetching the minidraw postcode. "+err.Error()))
 			}
 		}
 	}
