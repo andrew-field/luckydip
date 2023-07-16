@@ -87,7 +87,6 @@ func main() {
 	if result {
 		resultSummary = "WIN!"
 	}
-
 	if errs != nil {
 		resultSummary = "Error - " + resultSummary
 	}
@@ -106,7 +105,7 @@ func main() {
 func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 	page.MustNavigate("https://pickmypostcode.com")
 
-	//Login
+	// Login
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content.wrapper--content__relative > nav > ul > li.nav--buttons.nav--item > button.btn.btn-secondary.btn-cancel").MustClick()
 	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
 	page.MustElement("#confirm-email").MustInput(client.Email)
@@ -116,14 +115,14 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 	postcodesToday := postcodes{}
 	var err error
 
-	//Main draw
+	// Main draw
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 	el := page.MustElement("#main-draw-header > div > div > p.result--postcode")
 	if postcodesToday.Main, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the main postcode. "+err.Error()))
 	}
 
-	//Video
+	// Video
 	page.MustNavigate("https://pickmypostcode.com/video/")
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 	el = page.MustElement("#result-header > div > p.result--postcode")
@@ -131,7 +130,7 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the video postcode. "+err.Error()))
 	}
 
-	//Survey draw
+	// Survey draw
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/")
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 	page.MustElement("#result-survey > div:nth-child(1) > div > div > div.survey-buttons > button.btn.btn-secondary").MustClick()
@@ -140,9 +139,11 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the survey postcode. "+err.Error()))
 	}
 
-	//Stackpot
-	page.MustNavigate("https://pickmypostcode.com/stackpot/").MustWaitStable()
+	// Stackpot
+	page.MustNavigate("https://pickmypostcode.com/stackpot/")
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
+	page.MustWaitStable()
+	page.MustWaitElementsMoreThan("p.result--postcode", 3)
 	stackpotPostcodes := page.MustElements("p.result--postcode")
 	postcodesToday.Stackpot = make([]string, len(stackpotPostcodes))
 	for i, el := range stackpotPostcodes {
@@ -153,8 +154,9 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 
 	// Bonus
 	postcodesToday.Bonus = make([]string, 3)
-	page.MustNavigate("https://pickmypostcode.com/your-bonus/").MustWaitStable()
+	page.MustNavigate("https://pickmypostcode.com/your-bonus/")
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
+	page.MustWaitElementsMoreThan("p.result--postcode", 3)
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
 	if postcodesToday.Bonus[0], err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 5 postcode. "+err.Error()))
@@ -165,10 +167,10 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 10 postcode. "+err.Error()))
 	}
 
-	// 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-twenty > div > div.result--header > p")
-	// 	if postcodesToday.Bonus[2], err = getPostcodeFromText(el.MustText()); err != nil {
-	//      *errs = errors.Join(*errs, errors.New("Error while fetching the bonus 20 postcode. "+err.Error()))
-	// 	}
+	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-twenty > div > div.result--header > p")
+	if postcodesToday.Bonus[2], err = getPostcodeFromText(el.MustText()); err != nil {
+		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 20 postcode. "+err.Error()))
+	}
 
 	loc, err := time.LoadLocation("Europe/London")
 	if err != nil {
@@ -188,7 +190,8 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 	// One could populate the bonus money for the first client here. For sake of simplicity and organisation, do not.
 
 	// Logout
-	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick().MustWaitStable()
+	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
+	page.MustWaitStable()
 
 	return postcodesToday
 }
@@ -207,7 +210,7 @@ func getPostcodeFromText(s string) (string, error) {
 
 	// Checks if the postcode is valid.
 	if !isValidPostcode(s) {
-		return "", errors.New("The postcode '" + s + "' is not valid.")
+		return "", errors.New("The postcode: " + s + " , is not valid.")
 	}
 
 	return s, nil
@@ -228,39 +231,31 @@ func isValidPostcode(s string) bool {
 }
 
 func LoginAndGetBonus(page *rod.Page, client *person, errs *error) {
-	page.MustNavigate("https://pickmypostcode.com")
+	page.MustNavigate("https://pickmypostcode.com").MustWaitStable()
 
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 
-	//Login
+	// Login
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content.wrapper--content__relative > nav > ul > li.nav--buttons.nav--item > button.btn.btn-secondary.btn-cancel").MustClick()
 	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
 	page.MustElement("#confirm-email").MustInput(client.Email)
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
 	page.MustWaitStable()
 
+	// Get bonus
 	page.MustNavigate("https://pickmypostcode.com/video/").MustWaitStable()
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/").MustWaitStable()
-	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 
-	// Populate bonus money. For some reason this doesn't always load properly. Loop until it does.
-	var el *rod.Element
-	for i := 0; ; i++ {
-		el = page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success")
-		if len(el.MustText()) < 10 {
-			break
-		}
-		if i > 10 {
-			*errs = errors.Join(*errs, errors.New("Error while fetching the bonus money for "+client.Name+". Time out. "+"Bonus text: "+el.MustText()))
-			break
-		}
-		time.Sleep(1 * time.Second)
+	// Get total bonus money
+	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
+	el := page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success")
+	if client.Bonus = el.MustText(); len(client.Bonus) > 10 {
+		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus money for "+client.Name+" Bonus text: "+el.MustText()))
 	}
 
-	client.Bonus = el.MustText()
-
 	// Logout
-	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick().MustWaitStable()
+	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
+	page.MustWaitStable()
 }
 
 func formatResults(people []person) string {
