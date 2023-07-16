@@ -47,8 +47,19 @@ func main() {
 		{Name: "Katherine", Email: "k_avery@outlook.com", Postcode: "gu307tg"},
 	}
 
+	// Create browser
+	l := launcher.New().Set("headless", "new") //.Headless(false) //.Set("headless", "new") //(false) //.Devtools(true)
+	defer l.Cleanup()                          // remove user-data-dir
+
+	url := l.MustLaunch()
+	browser := rod.New().ControlURL(url).MustConnect().Trace(true) //.SlowMotion(1 * time.Second)
+	defer browser.MustClose()
+
+	// launcher.Open(browser.ServeMonitor("0.0.0.0:1234"))
+	//browser.ServeMonitor("0.0.0.0:1234") // This can be coupled with -p 1234:1234 in the dockerfile
+
 	// Populate today's postcodes.
-	postcodesToday, errs := GetPostcodes(&people[0])
+	postcodesToday, errs := GetPostcodes(browser, &people[0])
 
 	// See if any postcodes match.
 	for i := range people {
@@ -66,23 +77,23 @@ func main() {
 	}
 
 	// Get overall WIN/LOSE/ERROR.
-	resultSummary := "ERROR"
-	if errs == nil {
-		var result bool
-		for _, person := range people {
-			result = result || person.MatchAny
-		}
-
-		if result {
-			resultSummary = "WIN!"
-		} else {
-			resultSummary = "LOSE"
-		}
+	resultSummary := "LOSE"
+	result := false
+	for _, person := range people {
+		result = result || person.MatchAny
 	}
 
-	// Login for each client and collect bonus (First client already completed earlier when fetching postcodes).
+	if result {
+		resultSummary = "WIN!"
+	}
+
+	if errs != nil {
+		resultSummary = "Error - " + resultSummary
+	}
+
+	// Login for each client and collect bonus.
 	for i := range people {
-		LoginAndGetBonus(&people[i], &errs)
+		LoginAndGetBonus(browser, &people[i], &errs)
 	}
 
 	body := fmt.Sprintf(formatResults(people) + "\n\n" + formatPostcodes(postcodesToday))
@@ -96,17 +107,7 @@ func main() {
 	}
 }
 
-func GetPostcodes(client *person) (postcodes, error) {
-	l := launcher.New().Headless(true) //.Devtools(true)
-	defer l.Cleanup()                  // remove user-data-dir
-
-	url := l.MustLaunch()
-	browser := rod.New().ControlURL(url).MustConnect() //.Trace(true) //.SlowMotion(3 * time.Second)
-	defer browser.MustClose()
-
-	// launcher.Open(browser.ServeMonitor("0.0.0.0:1234"))
-	//browser.ServeMonitor("0.0.0.0:1234") // This can be coupled with -p 1234:1234 in the dockerfile
-
+func GetPostcodes(browser *rod.Browser, client *person) (postcodes, error) {
 	// An effort to avoid bot detection.
 	page := stealth.MustPage(browser)
 	defer page.MustClose()
@@ -176,11 +177,13 @@ func GetPostcodes(client *person) (postcodes, error) {
 	}
 
 	// For some reason these bonus postcodes don't load properly all the time. Loop until they are loaded properly.
+	postcodesToday.Bonus = make([]string, 3)
 	page.MustNavigate("https://pickmypostcode.com/your-bonus/").MustWaitLoad()
 	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 	for i := 0; ; i++ {
 		el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
 		if postcode, err = getPostcodeFromText(el.MustText()); err == nil {
+			postcodesToday.Bonus[0] = postcode
 			break
 		}
 		if i > 10 {
@@ -189,12 +192,11 @@ func GetPostcodes(client *person) (postcodes, error) {
 		}
 		time.Sleep(1 * time.Second)
 	}
-	postcodesToday.Bonus = make([]string, 3)
-	postcodesToday.Bonus[0] = postcode
 
 	for i := 0; ; i++ {
 		el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-ten > div > div.result--header > p")
 		if postcode, err = getPostcodeFromText(el.MustText()); err == nil {
+			postcodesToday.Bonus[1] = postcode
 			break
 		}
 		if i > 10 {
@@ -203,11 +205,11 @@ func GetPostcodes(client *person) (postcodes, error) {
 		}
 		time.Sleep(1 * time.Second)
 	}
-	postcodesToday.Bonus[1] = postcode
 
 	// for i := 0; ; i++ {
 	// 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-twenty > div > div.result--header > p")
 	// 	if postcode, err = getPostcodeFromText(el.MustText()); err == nil {
+	//      postcodesToday.Bonus[2] = postcode
 	// 		break
 	// 	}
 	// 	if i > 10 {
@@ -216,7 +218,6 @@ func GetPostcodes(client *person) (postcodes, error) {
 	// 	}
 	// 	time.Sleep(1 * time.Second)
 	// }
-	// postcodesToday.Bonus[2] = postcode
 
 	loc, err := time.LoadLocation("Europe/London")
 	if err != nil {
@@ -226,16 +227,26 @@ func GetPostcodes(client *person) (postcodes, error) {
 
 		// Check if it's after 18:00 in London
 		if currentTime.Hour() >= 18 {
-			el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
-			postcode, err = getPostcodeFromText(el.MustText())
-			if err != nil {
-				errs = errors.Join(errs, errors.New("Error while fetching the minidraw postcode. "+err.Error()))
+			for i := 0; ; i++ {
+				el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
+				if postcode, err = getPostcodeFromText(el.MustText()); err == nil {
+					postcodesToday.Minidraw = postcode
+					break
+				}
+				if i > 10 {
+					errs = errors.Join(errs, errors.New("Error while fetching the minidraw postcode. Time out. "+err.Error()))
+					break
+				}
+				time.Sleep(1 * time.Second)
 			}
-			postcodesToday.Minidraw = postcode
 		}
 	}
 
 	// One could populate the bonus money for the first client here. For sake of simplicity and organisation, do not.
+
+	// Logout
+	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
+	time.Sleep(6 * time.Second)
 
 	return postcodesToday, errs
 }
@@ -274,22 +285,15 @@ func isValidPostcode(s string) bool {
 	return true
 }
 
-func LoginAndGetBonus(client *person, errs *error) {
-	l := launcher.New().Headless(true)
-	defer l.Cleanup() // remove launcher.FlagUserDataDir
-
-	url := l.MustLaunch()
-	browser := rod.New().ControlURL(url).MustConnect() //.Trace(true) //.SlowMotion(3 * time.Second)
-	defer browser.MustClose()
-
-	// launcher.Open(browser.ServeMonitor(""))
-
+func LoginAndGetBonus(browser *rod.Browser, client *person, errs *error) {
 	// An effort to avoid bot detection.
 	page := stealth.MustPage(browser)
 	defer page.MustClose()
 
 	page.SetViewport(&proto.EmulationSetDeviceMetricsOverride{Width: 1920, Height: 1080})
 	page.MustNavigate("https://pickmypostcode.com")
+
+	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 
 	//Login
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content.wrapper--content__relative > nav > ul > li.nav--buttons.nav--item > button.btn.btn-secondary.btn-cancel").MustClick()
@@ -298,12 +302,12 @@ func LoginAndGetBonus(client *person, errs *error) {
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
 	page.MustWaitLoad()
 
-	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 	page.MustElement("#v-main-header > div > nav > a") // Wait for definite login
 	time.Sleep(1 * time.Second)
 	page.MustNavigate("https://pickmypostcode.com/video/").MustWaitLoad()
 	time.Sleep(1 * time.Second)
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/").MustWaitLoad()
+	page.MustElement("#gdpr-consent-tool-wrapper").Remove()
 
 	// Populate bonus money. For some reason this doesn't always load properly. Loop until it does.
 	var el *rod.Element
@@ -320,6 +324,9 @@ func LoginAndGetBonus(client *person, errs *error) {
 	}
 
 	client.Bonus = el.MustText()
+
+	// Logout
+	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
 }
 
 func formatResults(people []person) string {
@@ -344,7 +351,7 @@ func formatPostcodes(postcodesToday postcodes) string {
 
 func sendEmail(to, subject, body string) error {
 	// Set up authentication information.
-	auth := smtp.PlainAuth("", "andrewpcfield@gmail.com", "", "smtp.gmail.com") // Need to remove app password from code.
+	auth := smtp.PlainAuth("", "andrewpcfield@gmail.com", "qjmgdsxsbuhodbkb", "smtp.gmail.com") // Need to remove app password from code.
 
 	// Compose the message.
 	msg := "To: " + to + "\r\n" +
