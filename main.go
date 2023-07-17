@@ -111,13 +111,8 @@ func main() {
 }
 
 func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) postcodes {
-	page.MustNavigate("https://pickmypostcode.com")
-
 	// Login
-	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content.wrapper--content__relative > nav > ul > li.nav--buttons.nav--item > button.btn.btn-secondary.btn-cancel").MustClick()
-	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
-	page.MustElement("#confirm-email").MustInput(client.Email)
-	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
+	login(page, client)
 
 	// Deny all cookies etc.
 	page.MustSearch("#denyAll").MustClick()
@@ -201,6 +196,16 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	return postcodesToday
 }
 
+func login(page *rod.Page, client *person) {
+	page.MustNavigate("https://pickmypostcode.com")
+
+	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content.wrapper--content__relative > nav > ul > li.nav--buttons.nav--item > button.btn.btn-secondary.btn-cancel").MustClick()
+	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
+	page.MustElement("#confirm-email").MustInput(client.Email)
+	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
+	page.MustWaitStable()
+}
+
 func getPostcodeFromText(s string) (string, error) {
 	// Get the first line of the string
 	if i := strings.IndexByte(s, '\n'); i >= 0 {
@@ -236,14 +241,8 @@ func isValidPostcode(s string) bool {
 }
 
 func LoginAndGetBonus(page *rod.Page, client *person, errs *error) {
-	page.MustNavigate("https://pickmypostcode.com")
-
 	// Login
-	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content.wrapper--content__relative > nav > ul > li.nav--buttons.nav--item > button.btn.btn-secondary.btn-cancel").MustClick()
-	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
-	page.MustElement("#confirm-email").MustInput(client.Email)
-	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
-	page.MustWaitStable()
+	login(page, client)
 
 	// Get bonus
 	page.MustNavigate("https://pickmypostcode.com/video/").MustWaitStable()
