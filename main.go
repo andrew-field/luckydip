@@ -55,8 +55,11 @@ func main() {
 
 	var errs error
 
+	loc, _ := time.LoadLocation("Europe/London")
+	isMainDraw := time.Now().In(loc).Hour() == 18
+
 	// Populate today's postcodes.
-	postcodesToday := GetPostcodes(page, &people[0], &errs)
+	postcodesToday := GetPostcodes(page, isMainDraw, &people[0], &errs)
 
 	// See if any postcodes match.
 	result := false
@@ -75,15 +78,22 @@ func main() {
 		result = result || people[i].MatchAny
 	}
 
-	// Login for each client and collect bonus.
-	for i := range people {
-		LoginAndGetBonus(page, &people[i], &errs)
+	if isMainDraw {
+		// Login for each client and collect bonus.
+		for i := range people {
+			LoginAndGetBonus(page, &people[i], &errs)
+		}
 	}
 
 	// Get overall WIN/LOSE/ERROR.
-	resultSummary := "LOSE"
+	resultSummary := "Stackpot -"
+	if isMainDraw {
+		resultSummary = "Main draw -"
+	}
 	if result {
-		resultSummary = "WIN!"
+		resultSummary += " WIN!"
+	} else {
+		resultSummary += " LOSE"
 	}
 	if errs != nil {
 		resultSummary = "Error - " + resultSummary
@@ -100,7 +110,7 @@ func main() {
 	}
 }
 
-func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
+func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) postcodes {
 	page.MustNavigate("https://pickmypostcode.com")
 
 	// Login
@@ -115,7 +125,24 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 	page.MustWaitStable()
 
 	postcodesToday := postcodes{}
+	postcodesToday.Bonus = make([]string, 3)
 	var err error
+
+	if !isMainDraw {
+		// Stackpot
+		page.MustNavigate("https://pickmypostcode.com/stackpot/")
+		page.MustWaitStable()
+		page.MustWaitElementsMoreThan("p.result--postcode", 3)
+		stackpotPostcodes := page.MustElements("p.result--postcode")
+		postcodesToday.Stackpot = make([]string, len(stackpotPostcodes))
+		for i, el := range stackpotPostcodes {
+			if postcodesToday.Stackpot[i], err = getPostcodeFromText(el.MustText()); err != nil {
+				*errs = errors.Join(*errs, errors.New("Error while fetching the stackpot postcodes. "+err.Error()))
+			}
+		}
+
+		return postcodesToday
+	}
 
 	// Main draw
 	el := page.MustElement("#main-draw-header > div > div > p.result--postcode")
@@ -138,20 +165,7 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the survey postcode. "+err.Error()))
 	}
 
-	// Stackpot
-	page.MustNavigate("https://pickmypostcode.com/stackpot/")
-	page.MustWaitStable()
-	page.MustWaitElementsMoreThan("p.result--postcode", 3)
-	stackpotPostcodes := page.MustElements("p.result--postcode")
-	postcodesToday.Stackpot = make([]string, len(stackpotPostcodes))
-	for i, el := range stackpotPostcodes {
-		if postcodesToday.Stackpot[i], err = getPostcodeFromText(el.MustText()); err != nil {
-			*errs = errors.Join(*errs, errors.New("Error while fetching the stackpot postcodes. "+err.Error()))
-		}
-	}
-
 	// Bonus
-	postcodesToday.Bonus = make([]string, 3)
 	page.MustNavigate("https://pickmypostcode.com/your-bonus/")
 	page.MustWaitStable()
 	page.MustWaitElementsMoreThan("p.result--postcode", 2)
@@ -170,19 +184,12 @@ func GetPostcodes(page *rod.Page, client *person, errs *error) postcodes {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 20 postcode. "+err.Error()))
 	}
 
-	loc, err := time.LoadLocation("Europe/London")
-	if err != nil {
-		*errs = errors.Join(*errs, errors.New("Error loading location:"+err.Error()))
-	} else {
-		currentTime := time.Now().In(loc)
-
-		// Check if it's after 18:00 in London
-		if currentTime.Hour() >= 18 {
-			el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
-			if postcodesToday.Minidraw, err = getPostcodeFromText(el.MustText()); err != nil {
-				*errs = errors.Join(*errs, errors.New("Error while fetching the minidraw postcode. "+err.Error()))
-			}
-		}
+	// Minidraw
+	page.MustElement("#fpl-minidraw > section > div").MustScrollIntoView()
+	time.Sleep(10 * time.Second)
+	el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
+	if postcodesToday.Minidraw, err = getPostcodeFromText(el.MustText()); err != nil {
+		*errs = errors.Join(*errs, errors.New("Error while fetching the minidraw postcode. "+err.Error()))
 	}
 
 	// One could populate the bonus money for the first client here. For sake of simplicity and organisation, do not.
