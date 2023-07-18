@@ -46,7 +46,7 @@ func main() {
 	}
 
 	// Create browser
-	browser := rod.New().MustConnect() // -rod="show,trace,slow=1s,monitor=:1234"
+	browser := rod.New().MustConnect().Trace(true) // -rod="show,trace,slow=1s,monitor=:1234"
 
 	// browser.ServeMonitor("0.0.0.0:1234") // This can be coupled with -p 1234:1234 in the dockerfile. Open a browser and navigate to this address.
 
@@ -120,7 +120,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	page.MustWaitStable()
 
 	postcodesToday := postcodes{}
-	postcodesToday.Bonus = make([]string, 3)
+	postcodesToday.Bonus = make([]string, 3) // Even if it is not a main draw, this is needed so the formatting of postcodes doesn't crash
 	var err error
 
 	if !isMainDraw {
@@ -137,6 +137,8 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 		}
 
 		return postcodesToday
+	} else {
+		postcodesToday.Stackpot = make([]string, 3) // Needed so the formatting of postcodes doesn't crash
 	}
 
 	// Main draw
@@ -154,7 +156,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 
 	// Survey draw
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/")
-	page.MustElement("#result-survey > div:nth-child(1) > div > div > div.survey-buttons > button.btn.btn-secondary").MustClick()
+	page.MustElement("#result-survey > div:nth-child(1) > div > div > div.survey-buttons > button.btn.btn-secondary").MustScrollIntoView().MustClick()
 	el = page.MustElement("#result-header > div > p.result--postcode")
 	if postcodesToday.Survey, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the survey postcode. "+err.Error()))
@@ -180,7 +182,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	}
 
 	// Minidraw
-	page.MustElement("#fpl-minidraw > section > div").MustScrollIntoView()
+	page.MustElement("#fpl-minidraw > section > div > p.postcode").MustScrollIntoView()
 	time.Sleep(10 * time.Second)
 	el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
 	if postcodesToday.Minidraw, err = getPostcodeFromText(el.MustText()); err != nil {
