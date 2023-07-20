@@ -156,7 +156,9 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 
 	// Survey draw
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/")
-	page.MustElement("#result-survey > div:nth-child(1) > div > div > div.survey-buttons > button.btn.btn-secondary").MustScrollIntoView().MustClick()
+	button := page.MustElement("#result-survey > div:nth-child(1) > div > div > div.survey-buttons > button.btn.btn-secondary").MustScrollIntoView()
+	page.Timeout(5 * time.Second).MustElement("#v-aside-rt").Remove() // Sometimes this content thing blocks the button
+	button.MustClick()
 	el = page.MustElement("#result-header > div > p.result--postcode")
 	if postcodesToday.Survey, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the survey postcode. "+err.Error()))
@@ -165,7 +167,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	// Bonus
 	page.MustNavigate("https://pickmypostcode.com/your-bonus/")
 	page.MustWaitStable()
-	page.MustWaitElementsMoreThan("p.result--postcode", 2)
+	page.MustWaitElementsMoreThan("p.result--postcode", 2) // 3 fails for some reason
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
 	if postcodesToday.Bonus[0], err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 5 postcode. "+err.Error()))
