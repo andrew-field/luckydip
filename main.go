@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/smtp"
+	"os"
 	"strings"
 	"time"
 	"unicode"
@@ -285,7 +286,7 @@ func formatPostcodes(postcodesToday postcodes) string {
 
 func sendEmail(to, subject, body string) error {
 	// Set up authentication information.
-	auth := smtp.PlainAuth("", "andrewpcfield@gmail.com", "", "smtp.gmail.com") // Need to remove app password from code.
+	auth := smtp.PlainAuth("", "andrewpcfield@gmail.com", os.Getenv("GOOGLEAPPPASSWORD"), "smtp.gmail.com") // Need to remove app password from code.
 
 	// Compose the message.
 	msg := "To: " + to + "\r\n" +
