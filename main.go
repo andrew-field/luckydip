@@ -49,7 +49,7 @@ func main() {
 	// Create browser
 	browser := rod.New().MustConnect().Trace(true) // -rod="show,trace,slow=1s,monitor=:1234"
 
-	// browser.ServeMonitor("0.0.0.0:1234") Open a browser and navigate to this address.
+	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
 
 	// An effort to avoid bot detection.
 	page := stealth.MustPage(browser)
