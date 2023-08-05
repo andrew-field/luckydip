@@ -118,7 +118,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	// Deny all cookies etc.
 	page.MustSearch("#denyAll").MustClick()
 	page.MustSearch("button.mat-focus-indicator.okButton.mat-raised-button.mat-button-base").MustClick()
-	page.MustWaitStable()
+	page.MustWaitDOMStable()
 
 	postcodesToday := postcodes{}
 	postcodesToday.Bonus = make([]string, 3) // Even if it is not a main draw, this is needed so the formatting of postcodes doesn't crash
@@ -127,7 +127,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	if !isMainDraw {
 		// Stackpot
 		page.MustNavigate("https://pickmypostcode.com/stackpot/")
-		page.MustWaitStable()
+		page.MustWaitDOMStable()
 		page.MustWaitElementsMoreThan("p.result--postcode", 3)
 		stackpotPostcodes := page.MustElements("p.result--postcode")
 		postcodesToday.Stackpot = make([]string, len(stackpotPostcodes))
@@ -167,7 +167,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 
 	// Bonus
 	page.MustNavigate("https://pickmypostcode.com/your-bonus/")
-	page.MustWaitStable()
+	page.MustWaitDOMStable()
 	page.MustWaitElementsMoreThan("p.result--postcode", 2) // 3 fails for some reason
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
 	if postcodesToday.Bonus[0], err = getPostcodeFromText(el.MustText()); err != nil {
@@ -196,7 +196,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 
 	// Logout
 	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
-	page.MustWaitStable()
+	page.MustWaitDOMStable()
 
 	return postcodesToday
 }
@@ -208,7 +208,7 @@ func login(page *rod.Page, client *person) {
 	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
 	page.MustElement("#confirm-email").MustInput(client.Email)
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
-	page.MustWaitStable()
+	page.MustWaitDOMStable()
 }
 
 func getPostcodeFromText(s string) (string, error) {
@@ -250,8 +250,8 @@ func LoginAndGetBonus(page *rod.Page, client *person, errs *error) {
 	login(page, client)
 
 	// Get bonus
-	page.MustNavigate("https://pickmypostcode.com/video/").MustWaitStable()
-	page.MustNavigate("https://pickmypostcode.com/survey-draw/").MustWaitStable()
+	page.MustNavigate("https://pickmypostcode.com/video/").MustWaitDOMStable()
+	page.MustNavigate("https://pickmypostcode.com/survey-draw/").MustWaitDOMStable()
 
 	// Get total bonus money
 	el := page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success")
@@ -261,7 +261,7 @@ func LoginAndGetBonus(page *rod.Page, client *person, errs *error) {
 
 	// Logout
 	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
-	page.MustWaitStable()
+	page.MustWaitDOMStable()
 }
 
 func formatResults(people []person) string {
