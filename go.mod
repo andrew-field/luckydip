@@ -1,4 +1,4 @@
-module pickmypostcode
+module example.com/gcf
 
 go 1.20
 
