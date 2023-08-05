@@ -1,9 +1,8 @@
-package helloworld
+package main
 
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"net/smtp"
 	"os"
 	"strings"
@@ -37,8 +36,7 @@ type postcodes struct {
 	Minidraw string
 }
 
-// HelloHTTP is an HTTP Cloud Function with a request parameter.
-func HelloHTTP(w http.ResponseWriter, r *http.Request) {
+func main() {
 	// Create all clients.
 	people := []person{
 		{Name: "Andrew", Email: "andrew_field+pickmypostcode.com@hotmail.co.uk", Postcode: "gu113nt"},
