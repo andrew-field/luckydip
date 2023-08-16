@@ -41,7 +41,7 @@ type postcodes struct {
 func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 	// Create all clients.
 	people := []person{
-		{Name: "Andrew", Email: "andrew_field+pickmypostcode.com@hotmail.co.uk", Postcode: "gu113nt"},
+		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Postcode: "gu113nt"},
 		{Name: "Dad               ", Email: "mikefield@emfield.net", Postcode: "gu113gz"},
 		{Name: "David            ", Email: "david.jafield@gmail.com", Postcode: "gu101dd"},
 		{Name: "James            ", Email: "j_field@hotmail.co.uk", Postcode: "gu113nt"},
