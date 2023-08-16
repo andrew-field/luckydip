@@ -1,6 +1,6 @@
 module example.com/gcf
 
-go 1.20
+go 1.21.0
 
 require (
 	github.com/go-rod/rod v0.114.2
