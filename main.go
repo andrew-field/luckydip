@@ -112,6 +112,8 @@ func main() {
 }
 
 func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) postcodes {
+	page.MustNavigate("https://pickmypostcode.com")
+
 	// Login
 	login(page, client)
 
@@ -196,14 +198,11 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 
 	// Logout
 	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
-	page.MustWaitDOMStable()
 
 	return postcodesToday
 }
 
 func login(page *rod.Page, client *person) {
-	page.MustNavigate("https://pickmypostcode.com")
-
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content.wrapper--content__relative > nav > ul > li.nav--buttons.nav--item > button.btn.btn-secondary.btn-cancel").MustClick()
 	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
 	page.MustElement("#confirm-email").MustInput(client.Email)
@@ -261,7 +260,6 @@ func LoginAndGetBonus(page *rod.Page, client *person, errs *error) {
 
 	// Logout
 	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
-	page.MustWaitDOMStable()
 }
 
 func formatResults(people []person) string {
