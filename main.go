@@ -22,8 +22,8 @@ type person struct {
 	MatchSurvey   bool
 	MatchStackpot bool
 	MatchBonus    bool
-	MatchAny      bool
 	MatchMinidraw bool
+	MatchAny      bool
 	Bonus         string
 }
 
@@ -105,7 +105,7 @@ func main() {
 		body += fmt.Sprintf("\n\nErrors:\n" + errs.Error())
 	}
 
-	err := sendEmail("andrew_field+pickmypostcodesummary@hotmail.co.uk", resultSummary+" - Pick my postcode summary", body)
+	err := sendEmail("andrew_field+pickmypostcodesummary@hotmail.co.uk", resultSummary+" - Pick my postcode summary.", body)
 	if err != nil {
 		panic(err)
 	}
