@@ -3,7 +3,7 @@ module pickmypostcode
 go 1.21.0
 
 require (
-	github.com/go-rod/rod v0.114.2
+	github.com/go-rod/rod v0.114.3
 	github.com/go-rod/stealth v0.4.9
 )
 
