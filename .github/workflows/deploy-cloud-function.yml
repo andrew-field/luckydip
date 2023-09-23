@@ -1,0 +1,35 @@
+name: Deploy cloud function
+
+on:
+  push:
+    branches: [ "cloudFunction" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+  
+    steps:
+    - uses: actions/checkout@main
+
+    - name: Auth
+      uses: 'google-github-actions/auth@main'
+      with:
+        workload_identity_provider: ${{ secrets.WIP }}
+        service_account: ${{ secrets.SA }}
+# This was setup using: https://github.com/google-github-actions/auth#setup
+# This might also be useful: https://www.youtube.com/watch?v=ZgVhU5qvK1M
+
+    - name: Set up Cloud SDK
+      uses: 'google-github-actions/setup-gcloud@main'
+      with:
+        version: '>= 363.0.0'
+
+    - name: Deploy
+      run: 'gcloud functions deploy pickCloudFunction2 --gen2 --runtime=go121 --region=us-west1 --trigger-http --allow-unauthenticated --entry-point=HelloHTTP --memory=2Gi --timeout=300s --set-env-vars=[GOOGLEAPPPASSWORD=${{ secrets.GAP }}] --max-instances=1'
