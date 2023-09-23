@@ -14,3 +14,4 @@ jobs:
     uses: andrew-field/reusable-workflows/.github/workflows/deploy-cloud-function.yml@master
     with:
       function_name: pickCloudFunction2
+    secrets: inherit
