@@ -23,6 +23,7 @@ jobs:
       with:
         workload_identity_provider: ${{ secrets.WIP }}
         service_account: ${{ secrets.SA }}
+        project_id: pickmypostcode3
 # This was setup using: https://github.com/google-github-actions/auth#setup
 # This might also be useful: https://www.youtube.com/watch?v=ZgVhU5qvK1M
 
