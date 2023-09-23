@@ -2,7 +2,7 @@ name: Deploy cloud function
 
 on:
   push:
-    branches: [ "cloudFunction" ]
+    branches: ["cloudFunction"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -33,4 +33,4 @@ jobs:
         version: '>= 363.0.0'
 
     - name: Deploy
-      run: 'gcloud functions deploy pickCloudFunction2 --gen2 --runtime=go121 --region=us-west1 --trigger-http --allow-unauthenticated --entry-point=HelloHTTP --memory=2Gi --timeout=300s --set-env-vars=[GOOGLEAPPPASSWORD=${{ secrets.GAP }}] --max-instances=1'
+      run: 'gcloud functions deploy pickCloudFunction2 --gen2 --runtime=go121 --region=us-west1 --trigger-http --allow-unauthenticated --entry-point=HelloHTTP --memory=2Gi --timeout=300s --set-env-vars=GOOGLEAPPPASSWORD=${{ secrets.GAP }} --max-instances=1'
