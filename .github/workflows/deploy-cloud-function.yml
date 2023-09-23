@@ -9,28 +9,8 @@ on:
 
 jobs:
 
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-  
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Auth
-      uses: 'google-github-actions/auth@v1'
-      with:
-        workload_identity_provider: ${{ secrets.WIP }}
-        service_account: ${{ secrets.SA }}
-        project_id: pickmypostcode3
-# This was setup using: https://github.com/google-github-actions/auth#setup
-# This might also be useful: https://www.youtube.com/watch?v=ZgVhU5qvK1M
-
-    - name: Set up Cloud SDK
-      uses: 'google-github-actions/setup-gcloud@v1'
-      with:
-        version: '>= 363.0.0'
-
-    - name: Deploy
-      run: 'gcloud functions deploy pickCloudFunction2 --gen2 --runtime=go121 --region=us-west1 --trigger-http --allow-unauthenticated --entry-point=HelloHTTP --memory=2Gi --timeout=300s --set-env-vars=GOOGLEAPPPASSWORD=${{ secrets.GAP }} --max-instances=1'
+  deploy:
+    name: Deploy Cloud function
+    uses: andrew-field/reusable-workflows/.github/workflows/deploy-cloud-function.yml@master
+    with:
+      function_name: pickCloudFunction2
