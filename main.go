@@ -24,10 +24,10 @@ type person struct {
 	MatchBonus    bool
 	MatchMinidraw bool
 	MatchAny      bool
-	Bonus         string
+	BonusMoney    string
 }
 
-type postcodes struct {
+type tickets struct {
 	Main     string
 	Video    string
 	Survey   string
@@ -60,21 +60,21 @@ func main() {
 	isMainDraw := time.Now().In(loc).Hour() == 18
 
 	// Populate today's postcodes.
-	postcodesToday := GetPostcodes(page, isMainDraw, &people[0], &errs)
+	winningTickets := GetPostcodes(page, isMainDraw, people[0], &errs)
 
 	// See if any postcodes match.
 	result := false
 	for i := range people {
-		people[i].MatchMain = postcodesToday.Main == people[i].Postcode
-		people[i].MatchVideo = postcodesToday.Video == people[i].Postcode
-		people[i].MatchSurvey = postcodesToday.Survey == people[i].Postcode
-		for _, stackpotPostcode := range postcodesToday.Stackpot {
+		people[i].MatchMain = winningTickets.Main == people[i].Postcode
+		people[i].MatchVideo = winningTickets.Video == people[i].Postcode
+		people[i].MatchSurvey = winningTickets.Survey == people[i].Postcode
+		for _, stackpotPostcode := range winningTickets.Stackpot {
 			people[i].MatchStackpot = people[i].MatchStackpot || stackpotPostcode == people[i].Postcode
 		}
-		for _, bonusPostcode := range postcodesToday.Bonus {
+		for _, bonusPostcode := range winningTickets.Bonus {
 			people[i].MatchBonus = people[i].MatchBonus || bonusPostcode == people[i].Postcode
 		}
-		people[i].MatchMinidraw = postcodesToday.Minidraw == people[i].Postcode
+		people[i].MatchMinidraw = winningTickets.Minidraw == people[i].Postcode
 		people[i].MatchAny = people[i].MatchMain || people[i].MatchVideo || people[i].MatchSurvey || people[i].MatchStackpot || people[i].MatchBonus || people[i].MatchMinidraw
 		result = result || people[i].MatchAny
 	}
@@ -82,7 +82,7 @@ func main() {
 	if isMainDraw {
 		// Login for each client and collect bonus.
 		for i := range people {
-			LoginAndGetBonus(page, &people[i], &errs)
+			people[i].BonusMoney = LoginAndGetBonus(page, people[i], &errs)
 		}
 	}
 
@@ -100,18 +100,20 @@ func main() {
 		resultSummary = "Error - " + resultSummary
 	}
 
-	body := fmt.Sprintf(formatResults(people) + "\n\n" + formatPostcodes(postcodesToday))
+	// Generate message.
+	body := fmt.Sprintf(formatResults(people) + "\n\n" + formatPostcodes(winningTickets))
 	if errs != nil {
 		body += fmt.Sprintf("\n\nErrors:\n" + errs.Error())
 	}
 
+	// Send email.
 	err := sendEmail("andrew_field+pickmypostcodesummary@hotmail.co.uk", resultSummary+" - Pick my postcode summary.", body)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) postcodes {
+func GetPostcodes(page *rod.Page, isMainDraw bool, client person, errs *error) tickets {
 	page.MustNavigate("https://pickmypostcode.com")
 
 	// Login
@@ -122,8 +124,8 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	page.MustSearch("button.mat-focus-indicator.okButton.mat-raised-button.mat-button-base").MustClick()
 	page.MustWaitDOMStable()
 
-	postcodesToday := postcodes{}
-	postcodesToday.Bonus = make([]string, 3) // Even if it is not a main draw, this is needed so the formatting of postcodes doesn't crash
+	winningTickets := tickets{}
+	winningTickets.Bonus = make([]string, 3) // Even if it is not a main draw, this is needed so the formatting of postcodes doesn't crash
 	var err error
 
 	if !isMainDraw {
@@ -132,28 +134,28 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 		page.MustWaitDOMStable()
 		page.MustWaitElementsMoreThan("p.result--postcode", 3)
 		stackpotPostcodes := page.MustElements("p.result--postcode")
-		postcodesToday.Stackpot = make([]string, len(stackpotPostcodes))
+		winningTickets.Stackpot = make([]string, len(stackpotPostcodes))
 		for i, el := range stackpotPostcodes {
-			if postcodesToday.Stackpot[i], err = getPostcodeFromText(el.MustText()); err != nil {
+			if winningTickets.Stackpot[i], err = getPostcodeFromText(el.MustText()); err != nil {
 				*errs = errors.Join(*errs, errors.New("Error while fetching the stackpot postcodes. "+err.Error()))
 			}
 		}
 
-		return postcodesToday
+		return winningTickets
 	} else {
-		postcodesToday.Stackpot = make([]string, 3) // Needed so the formatting of postcodes doesn't crash
+		winningTickets.Stackpot = make([]string, 3) // Needed so the formatting of postcodes doesn't crash
 	}
 
 	// Main draw
 	el := page.MustElement("#main-draw-header > div > div > p.result--postcode")
-	if postcodesToday.Main, err = getPostcodeFromText(el.MustText()); err != nil {
+	if winningTickets.Main, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the main postcode. "+err.Error()))
 	}
 
 	// Video
 	page.MustNavigate("https://pickmypostcode.com/video/")
 	el = page.MustElement("#result-header > div > p.result--postcode")
-	if postcodesToday.Video, err = getPostcodeFromText(el.MustText()); err != nil {
+	if winningTickets.Video, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the video postcode. "+err.Error()))
 	}
 
@@ -163,7 +165,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	page.Timeout(5 * time.Second).MustElement("#v-aside-rt").Remove() // Sometimes this content thing blocks the button
 	button.MustClick()
 	el = page.MustElement("#result-header > div > p.result--postcode")
-	if postcodesToday.Survey, err = getPostcodeFromText(el.MustText()); err != nil {
+	if winningTickets.Survey, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the survey postcode. "+err.Error()))
 	}
 
@@ -172,17 +174,17 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	page.MustWaitDOMStable()
 	page.MustWaitElementsMoreThan("p.result--postcode", 2) // 3 fails for some reason
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
-	if postcodesToday.Bonus[0], err = getPostcodeFromText(el.MustText()); err != nil {
+	if winningTickets.Bonus[0], err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 5 postcode. "+err.Error()))
 	}
 
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-ten > div > div.result--header > p")
-	if postcodesToday.Bonus[1], err = getPostcodeFromText(el.MustText()); err != nil {
+	if winningTickets.Bonus[1], err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 10 postcode. "+err.Error()))
 	}
 
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-twenty > div > div.result--header > p")
-	if postcodesToday.Bonus[2], err = getPostcodeFromText(el.MustText()); err != nil {
+	if winningTickets.Bonus[2], err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 20 postcode. "+err.Error()))
 	}
 
@@ -190,7 +192,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	page.MustElement("#fpl-minidraw > section > div > p.postcode").MustScrollIntoView()
 	time.Sleep(10 * time.Second)
 	el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
-	if postcodesToday.Minidraw, err = getPostcodeFromText(el.MustText()); err != nil {
+	if winningTickets.Minidraw, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the minidraw postcode. "+err.Error()))
 	}
 
@@ -199,10 +201,10 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	// Logout
 	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
 
-	return postcodesToday
+	return winningTickets
 }
 
-func login(page *rod.Page, client *person) {
+func login(page *rod.Page, client person) {
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content.wrapper--content__relative > nav > ul > li.nav--buttons.nav--item > button.btn.btn-secondary.btn-cancel").MustClick()
 	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
 	page.MustElement("#confirm-email").MustInput(client.Email)
@@ -244,38 +246,40 @@ func isValidPostcode(s string) bool {
 	return true
 }
 
-func LoginAndGetBonus(page *rod.Page, client *person, errs *error) {
-	// Login
+func LoginAndGetBonus(page *rod.Page, client person, errs *error) string {
+	// Login.
 	login(page, client)
 
-	// Get bonus
+	// Get bonus money for the account.
 	page.MustNavigate("https://pickmypostcode.com/video/").MustWaitDOMStable()
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/").MustWaitDOMStable()
 
-	// Get total bonus money
-	el := page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success")
-	if client.Bonus = el.MustText(); len(client.Bonus) > 10 {
-		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus money for "+client.Name+" Bonus text: "+el.MustText()))
+	// Get total bonus money.
+	bonusMoney := page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success").MustText()
+	if len(bonusMoney) > 10 {
+		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus money for "+client.Name+" Bonus text: "+bonusMoney))
 	}
 
-	// Logout
+	// Logout.
 	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
+
+	return bonusMoney
 }
 
 func formatResults(people []person) string {
 	output := "Matches        Main    Video    Survey    Stackpot    Bonus    Minidraw    Any      Bonus Money\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-15t%-12t%-16t%-9t%-10s\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchStackpot, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.Bonus)
+		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-15t%-12t%-16t%-9t%-10s\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchStackpot, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.BonusMoney)
 	}
 	return output
 }
 
-func formatPostcodes(postcodesToday postcodes) string {
+func formatPostcodes(winningTickets tickets) string {
 	output := "Postcodes     Main             Video           Survey         Stackpot       Bonus          Minidraw\n"
-	output += fmt.Sprintf("                     %-14s%-14s%-14s%-14s%-14s%-14s\n", postcodesToday.Main, postcodesToday.Video, postcodesToday.Survey, postcodesToday.Stackpot[0], postcodesToday.Bonus[0], postcodesToday.Minidraw)
-	output += fmt.Sprintf("                                                                                  %-14s%-14s\n", postcodesToday.Stackpot[1], postcodesToday.Bonus[1])
-	output += fmt.Sprintf("                                                                                  %-14s%-14s\n", postcodesToday.Stackpot[2], postcodesToday.Bonus[2])
-	for _, postcode := range postcodesToday.Stackpot[3:] {
+	output += fmt.Sprintf("                     %-14s%-14s%-14s%-14s%-14s%-14s\n", winningTickets.Main, winningTickets.Video, winningTickets.Survey, winningTickets.Stackpot[0], winningTickets.Bonus[0], winningTickets.Minidraw)
+	output += fmt.Sprintf("                                                                                  %-14s%-14s\n", winningTickets.Stackpot[1], winningTickets.Bonus[1])
+	output += fmt.Sprintf("                                                                                  %-14s%-14s\n", winningTickets.Stackpot[2], winningTickets.Bonus[2])
+	for _, postcode := range winningTickets.Stackpot[3:] {
 		output += fmt.Sprintf("                                                                                  %-14s\n", postcode)
 	}
 
