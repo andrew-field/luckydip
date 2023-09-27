@@ -59,49 +59,75 @@ func main() {
 	loc, _ := time.LoadLocation("Europe/London")
 	isMainDraw := time.Now().In(loc).Hour() == 18
 
-	// Populate today's postcodes.
-	winningTickets := GetPostcodes(page, isMainDraw, people[0], &errs)
+	// Populate today's winning postcodes. Also getts the bonus money for the first client while there.
+	winningTickets := GetPostcodes(page, isMainDraw, &people[0], &errs)
 
 	// See if any postcodes match.
 	result := false
-	for i := range people {
-		people[i].MatchMain = winningTickets.Main == people[i].Postcode
-		people[i].MatchVideo = winningTickets.Video == people[i].Postcode
-		people[i].MatchSurvey = winningTickets.Survey == people[i].Postcode
-		for _, stackpotPostcode := range winningTickets.Stackpot {
-			people[i].MatchStackpot = people[i].MatchStackpot || stackpotPostcode == people[i].Postcode
+	if !isMainDraw {
+		for i := range people {
+			for _, stackpotPostcode := range winningTickets.Stackpot {
+				if stackpotPostcode == people[i].Postcode {
+					people[i].MatchStackpot = true
+					break
+				}
+			}
+			if people[i].MatchStackpot {
+				result = true // Don't break early in case of multiple winners.
+			}
 		}
-		for _, bonusPostcode := range winningTickets.Bonus {
-			people[i].MatchBonus = people[i].MatchBonus || bonusPostcode == people[i].Postcode
+	} else {
+		for i := range people {
+			people[i].MatchMain = winningTickets.Main == people[i].Postcode
+			people[i].MatchVideo = winningTickets.Video == people[i].Postcode
+			people[i].MatchSurvey = winningTickets.Survey == people[i].Postcode
+			for _, bonusPostcode := range winningTickets.Bonus {
+				if bonusPostcode == people[i].Postcode {
+					people[i].MatchBonus = true
+					break
+				}
+			}
+			people[i].MatchMinidraw = winningTickets.Minidraw == people[i].Postcode
+			people[i].MatchAny = people[i].MatchMain || people[i].MatchVideo || people[i].MatchSurvey || people[i].MatchBonus || people[i].MatchMinidraw
+			if people[i].MatchAny {
+				result = true // Don't break early in case of multiple winners.
+			}
 		}
-		people[i].MatchMinidraw = winningTickets.Minidraw == people[i].Postcode
-		people[i].MatchAny = people[i].MatchMain || people[i].MatchVideo || people[i].MatchSurvey || people[i].MatchStackpot || people[i].MatchBonus || people[i].MatchMinidraw
-		result = result || people[i].MatchAny
 	}
 
 	if isMainDraw {
-		// Login for each client and collect bonus.
-		for i := range people {
-			people[i].BonusMoney = LoginAndGetBonus(page, people[i], &errs)
+		// Login for each client and collect bonus. Already collected bonus for the first client so skip the first.
+		for i := range people[1:] {
+			LoginAndGetBonus(page, &people[i], &errs)
 		}
 	}
 
 	// Get overall WIN/LOSE/ERROR.
-	resultSummary := "Stackpot -"
-	if isMainDraw {
-		resultSummary = "Main draw -"
-	}
+	resultSummary := "LOSE - "
 	if result {
-		resultSummary += " WIN!"
+		resultSummary = " WIN! - "
+	}
+	if isMainDraw {
+		resultSummary += "Main draw"
 	} else {
-		resultSummary += " LOSE"
+		resultSummary += "Stackpot"
 	}
 	if errs != nil {
 		resultSummary = "Error - " + resultSummary
 	}
 
-	// Generate message.
-	body := fmt.Sprintf(formatResults(people) + "\n\n" + formatPostcodes(winningTickets))
+	// Generate message content.
+	var results string
+	var postcodes string
+	if isMainDraw {
+		results = formatResultsMainDraw(people)
+		postcodes = formatPostcodesMainDraw(winningTickets)
+	} else {
+		results = formatResultsStackpot(people)
+		postcodes = formatPostcodesStackpot(winningTickets)
+	}
+
+	body := fmt.Sprintf(results + "\n\n" + postcodes)
 	if errs != nil {
 		body += fmt.Sprintf("\n\nErrors:\n" + errs.Error())
 	}
@@ -113,7 +139,7 @@ func main() {
 	}
 }
 
-func GetPostcodes(page *rod.Page, isMainDraw bool, client person, errs *error) tickets {
+func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) tickets {
 	page.MustNavigate("https://pickmypostcode.com")
 
 	// Login
@@ -125,7 +151,6 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client person, errs *error) t
 	page.MustWaitDOMStable()
 
 	winningTickets := tickets{}
-	winningTickets.Bonus = make([]string, 3) // Even if it is not a main draw, this is needed so the formatting of postcodes doesn't crash
 	var err error
 
 	if !isMainDraw {
@@ -142,8 +167,6 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client person, errs *error) t
 		}
 
 		return winningTickets
-	} else {
-		winningTickets.Stackpot = make([]string, 3) // Needed so the formatting of postcodes doesn't crash
 	}
 
 	// Main draw
@@ -190,13 +213,14 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client person, errs *error) t
 
 	// Minidraw
 	page.MustElement("#fpl-minidraw > section > div > p.postcode").MustScrollIntoView()
-	time.Sleep(10 * time.Second)
+	time.Sleep(9 * time.Second)
 	el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
 	if winningTickets.Minidraw, err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the minidraw postcode. "+err.Error()))
 	}
 
-	// One could populate the bonus money for the first client here. For sake of simplicity and organisation, do not.
+	// While here, to save time later, populate the bonus money for the first client here.
+	PopulateTotalBonusMoneyForClient(page, errs, client)
 
 	// Logout
 	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
@@ -204,7 +228,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client person, errs *error) t
 	return winningTickets
 }
 
-func login(page *rod.Page, client person) {
+func login(page *rod.Page, client *person) {
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content.wrapper--content__relative > nav > ul > li.nav--buttons.nav--item > button.btn.btn-secondary.btn-cancel").MustClick()
 	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
 	page.MustElement("#confirm-email").MustInput(client.Email)
@@ -246,7 +270,7 @@ func isValidPostcode(s string) bool {
 	return true
 }
 
-func LoginAndGetBonus(page *rod.Page, client person, errs *error) string {
+func LoginAndGetBonus(page *rod.Page, client *person, errs *error) {
 	// Login.
 	login(page, client)
 
@@ -254,33 +278,47 @@ func LoginAndGetBonus(page *rod.Page, client person, errs *error) string {
 	page.MustNavigate("https://pickmypostcode.com/video/").MustWaitDOMStable()
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/").MustWaitDOMStable()
 
-	// Get total bonus money.
-	bonusMoney := page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success").MustText()
-	if len(bonusMoney) > 10 {
-		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus money for "+client.Name+" Bonus text: "+bonusMoney))
-	}
+	PopulateTotalBonusMoneyForClient(page, errs, client)
 
 	// Logout.
 	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
-
-	return bonusMoney
 }
 
-func formatResults(people []person) string {
-	output := "Matches        Main    Video    Survey    Stackpot    Bonus    Minidraw    Any      Bonus Money\n"
+func PopulateTotalBonusMoneyForClient(page *rod.Page, errs *error, client *person) {
+	if client.BonusMoney = page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success").MustText(); len(client.BonusMoney) > 10 {
+		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus money for "+client.Name+" Bonus text: "+client.BonusMoney))
+	}
+}
+
+func formatResultsMainDraw(people []person) string {
+	output := "Matches        Main    Video    Survey    Bonus    Minidraw    Any      Bonus Money\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-15t%-12t%-16t%-9t%-10s\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchStackpot, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.BonusMoney)
+		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-12t%-16t%-9t%-10s\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.BonusMoney)
 	}
 	return output
 }
 
-func formatPostcodes(winningTickets tickets) string {
-	output := "Postcodes     Main             Video           Survey         Stackpot       Bonus          Minidraw\n"
-	output += fmt.Sprintf("                     %-14s%-14s%-14s%-14s%-14s%-14s\n", winningTickets.Main, winningTickets.Video, winningTickets.Survey, winningTickets.Stackpot[0], winningTickets.Bonus[0], winningTickets.Minidraw)
-	output += fmt.Sprintf("                                                                                  %-14s%-14s\n", winningTickets.Stackpot[1], winningTickets.Bonus[1])
-	output += fmt.Sprintf("                                                                                  %-14s%-14s\n", winningTickets.Stackpot[2], winningTickets.Bonus[2])
-	for _, postcode := range winningTickets.Stackpot[3:] {
-		output += fmt.Sprintf("                                                                                  %-14s\n", postcode)
+func formatResultsStackpot(people []person) string {
+	output := "Matches        Stackpot\n"
+	for _, p := range people {
+		output += fmt.Sprintf("%-15s%-15t\n", p.Name, p.MatchStackpot)
+	}
+	return output
+}
+
+func formatPostcodesMainDraw(winningTickets tickets) string {
+	output := "Postcodes     Main             Video           Survey         Bonus          Minidraw\n"
+	output += fmt.Sprintf("                     %-14s%-14s%-14s%-14s%-14s\n", winningTickets.Main, winningTickets.Video, winningTickets.Survey, winningTickets.Bonus[0], winningTickets.Minidraw)
+	output += fmt.Sprintf("%60s\n", winningTickets.Bonus[1])
+	output += fmt.Sprintf("%60s\n", winningTickets.Bonus[2])
+
+	return output
+}
+
+func formatPostcodesStackpot(winningTickets tickets) string {
+	output := "Postcodes     Stackpot\n"
+	for _, postcode := range winningTickets.Stackpot {
+		output += fmt.Sprintf("%30s\n", postcode)
 	}
 
 	return output
@@ -288,7 +326,7 @@ func formatPostcodes(winningTickets tickets) string {
 
 func sendEmail(to, subject, body string) error {
 	// Set up authentication information.
-	auth := smtp.PlainAuth("", "andrewpcfield@gmail.com", os.Getenv("GOOGLEAPPPASSWORD"), "smtp.gmail.com") // Needs to have the app password set as an environment variable, "export GOOGLEAPPPASSWORD=   ".
+	auth := smtp.PlainAuth("", "andrewpcfield@gmail.com", os.Getenv("GOOGLEAPPPASSWORD"), "smtp.gmail.com") // Needs to have the app password set as an environment variable, "export GOOGLEAPPPASSWORD=xxx".
 
 	// Compose the message.
 	msg := "To: " + to + "\r\n" +
