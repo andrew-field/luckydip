@@ -189,6 +189,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	page.MustNavigate("https://pickmypostcode.com/your-bonus/")
 	page.MustWaitDOMStable()
 	page.MustWaitElementsMoreThan("p.result--postcode", 2) // 3 fails for some reason
+	winningTickets.Bonus = make([]string, 3)
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
 	if winningTickets.Bonus[0], err = getPostcodeFromText(el.MustText()); err != nil {
 		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 5 postcode. "+err.Error()))
