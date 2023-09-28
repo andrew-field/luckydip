@@ -92,7 +92,7 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if isMainDraw {
 		// Login for each client and collect bonus. Already collected bonus for the first client so skip the first.
-		for i := range people[1:] {
+		for i := 1; i < len(people); i++ {
 			LoginAndGetBonus(page, &people[i], &errs)
 		}
 	}
@@ -287,9 +287,9 @@ func PopulateTotalBonusMoneyForClient(page *rod.Page, errs *error, client *perso
 }
 
 func formatResultsMainDraw(people []person) string {
-	output := "Matches        Main    Video    Survey    Bonus    Minidraw    Any      Bonus Money\n"
+	output := "Matches        Main    Video    Survey    Bonus     Minidraw    Any      Bonus Money\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-12t%-16t%-9t%-10s\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.BonusMoney)
+		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-12t%-16t%-11t%-10s\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.BonusMoney)
 	}
 	return output
 }
@@ -303,10 +303,10 @@ func formatResultsStackpot(people []person) string {
 }
 
 func formatPostcodesMainDraw(winningTickets tickets) string {
-	output := "Postcodes     Main             Video           Survey         Bonus          Minidraw\n"
+	output := "Postcodes     Main             Video           Survey       Bonus          Minidraw\n"
 	output += fmt.Sprintf("                     %-14s%-14s%-14s%-14s%-14s\n", winningTickets.Main, winningTickets.Video, winningTickets.Survey, winningTickets.Bonus[0], winningTickets.Minidraw)
-	output += fmt.Sprintf("%60s\n", winningTickets.Bonus[1])
-	output += fmt.Sprintf("%60s\n", winningTickets.Bonus[2])
+	output += fmt.Sprintf("%85s\n", winningTickets.Bonus[1])
+	output += fmt.Sprintf("%85s\n", winningTickets.Bonus[2])
 
 	return output
 }
