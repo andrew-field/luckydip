@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/smtp"
 	"os"
+	"slices"
 	"strings"
 	"time"
 	"unicode"
@@ -68,13 +69,8 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 	result := false
 	if !isMainDraw {
 		for i := range people {
-			for _, stackpotPostcode := range winningTickets.Stackpot {
-				if stackpotPostcode == people[i].Postcode {
-					people[i].MatchStackpot = true
-					break
-				}
-			}
-			if people[i].MatchStackpot {
+			if slices.Contains(winningTickets.Stackpot, people[i].Postcode) {
+				people[i].MatchStackpot = true
 				result = true // Don't break early in case of multiple winners.
 			}
 		}
@@ -83,11 +79,8 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 			people[i].MatchMain = winningTickets.Main == people[i].Postcode
 			people[i].MatchVideo = winningTickets.Video == people[i].Postcode
 			people[i].MatchSurvey = winningTickets.Survey == people[i].Postcode
-			for _, bonusPostcode := range winningTickets.Bonus {
-				if bonusPostcode == people[i].Postcode {
-					people[i].MatchBonus = true
-					break
-				}
+			if slices.Contains(winningTickets.Bonus, people[i].Postcode) {
+				people[i].MatchBonus = true // Don't break early in case of multiple winners.
 			}
 			people[i].MatchMinidraw = winningTickets.Minidraw == people[i].Postcode
 			people[i].MatchAny = people[i].MatchMain || people[i].MatchVideo || people[i].MatchSurvey || people[i].MatchBonus || people[i].MatchMinidraw
