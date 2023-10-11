@@ -1,4 +1,4 @@
-module pickmypostcode
+module example.com/pickmypostcode
 
 go 1.21.1
 
