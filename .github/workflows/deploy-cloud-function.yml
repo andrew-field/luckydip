@@ -2,7 +2,7 @@ name: Deploy cloud function
 
 on:
   push:
-    branches: ["cloudFunction"]
+    branches: [master]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -13,5 +13,5 @@ jobs:
     name: Deploy Cloud function
     uses: andrew-field/reusable-workflows/.github/workflows/deploy-cloud-function.yml@master
     with:
-      function_name: pickCloudFunction2
+      function_name: pickMyPostcodeCloudFunction
     secrets: inherit
