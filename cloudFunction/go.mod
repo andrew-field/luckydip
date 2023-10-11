@@ -1,4 +1,4 @@
-module example.com/pickmypostcode
+module github.com/andrew-field/pickmypostcode/cloudFunction
 
 go 1.21.1
 
