@@ -1,4 +1,4 @@
-package helloworld
+package main
 
 import (
 	"errors"
@@ -36,6 +36,10 @@ type tickets struct {
 	Stackpot []string
 	Bonus    []string
 	Minidraw string
+}
+
+func main() {
+	HelloHTTP(nil, nil)
 }
 
 // HelloHTTP is an HTTP Cloud Function with a request parameter.
