@@ -1,6 +1,9 @@
 package cloudFunction
 
 import (
+	"bytes"
+	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -55,17 +58,40 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
 
 	// An effort to avoid bot detection.
-	page := stealth.MustPage(browser)
-
-	var errs error
+	page := stealth.MustPage(browser).Timeout(time.Second * 250)
 
 	loc, _ := time.LoadLocation("Europe/London")
 	isMainDraw := time.Now().In(loc).Hour() == 18
 
-	// Populate today's winning postcodes. Also getts the bonus money for the first client while there.
-	winningTickets := GetPostcodes(page, isMainDraw, &people[0], &errs)
+	var winningTickets tickets
 
-	// See if any postcodes match.
+	err := rod.Try(func() {
+		// Populate today's winning postcodes. Also gets the bonus money for the first client while there.
+		winningTickets = getWinningTickets(page, isMainDraw, &people[0])
+
+		if isMainDraw {
+			// Login for each client and collect bonus. Already collected bonus for the first client so skip the first.
+			for i := 1; i < len(people); i++ {
+				loginAndGetBonus(page, &people[i])
+			}
+		}
+	})
+
+	if err != nil {
+		summary := "Unknown error"
+		if errors.Is(err, context.DeadlineExceeded) {
+			summary = "Timeout error"
+		}
+
+		err = sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		if err != nil {
+			panic(err)
+		}
+
+		return
+	}
+
+	// Check for a winner.
 	result := false
 	if !isMainDraw {
 		for i := range people {
@@ -90,25 +116,17 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Get overall WIN/LOSE.
+	summary := " - Pick my postcode summary."
 	if isMainDraw {
-		// Login for each client and collect bonus. Already collected bonus for the first client so skip the first.
-		for i := 1; i < len(people); i++ {
-			LoginAndGetBonus(page, &people[i], &errs)
-		}
-	}
-
-	// Get overall WIN/LOSE/ERROR.
-	resultSummary := "LOSE - "
-	if result {
-		resultSummary = " WIN! - "
-	}
-	if isMainDraw {
-		resultSummary += "Main draw"
+		summary = "Main draw" + summary
 	} else {
-		resultSummary += "Stackpot"
+		summary = "Stackpot" + summary
 	}
-	if errs != nil {
-		resultSummary = "Error - " + resultSummary
+	if result {
+		summary = "WIN!" + summary
+	} else {
+		summary = "Lose" + summary
 	}
 
 	// Generate message content.
@@ -121,20 +139,16 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 		results = formatResultsStackpot(people)
 		postcodes = formatPostcodesStackpot(winningTickets)
 	}
-
 	body := fmt.Sprintf(results + "\n\n" + postcodes)
-	if errs != nil {
-		body += fmt.Sprintf("\n\nErrors:\n" + errs.Error())
-	}
 
 	// Send email.
-	err := sendEmail("andrew_field+pickmypostcodesummary@hotmail.co.uk", resultSummary+" - Pick my postcode summary.", body)
+	err = sendEmail(summary, body, nil)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) tickets {
+func getWinningTickets(page *rod.Page, isMainDraw bool, client *person) tickets {
 	page.MustNavigate("https://pickmypostcode.com")
 
 	// Login
@@ -157,7 +171,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 		winningTickets.Stackpot = make([]string, len(stackpotPostcodes))
 		for i, el := range stackpotPostcodes {
 			if winningTickets.Stackpot[i], err = getPostcodeFromText(el.MustText()); err != nil {
-				*errs = errors.Join(*errs, errors.New("Error while fetching the stackpot postcodes. "+err.Error()))
+				panic(errors.Join(err, errors.New("error while fetching the stackpot postcodes")))
 			}
 		}
 
@@ -167,14 +181,14 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	// Main draw
 	el := page.MustElement("#main-draw-header > div > div > p.result--postcode")
 	if winningTickets.Main, err = getPostcodeFromText(el.MustText()); err != nil {
-		*errs = errors.Join(*errs, errors.New("Error while fetching the main postcode. "+err.Error()))
+		panic(errors.Join(err, errors.New("error while fetching the main postcode")))
 	}
 
 	// Video
 	page.MustNavigate("https://pickmypostcode.com/video/")
 	el = page.MustElement("#result-header > div > p.result--postcode")
 	if winningTickets.Video, err = getPostcodeFromText(el.MustText()); err != nil {
-		*errs = errors.Join(*errs, errors.New("Error while fetching the video postcode. "+err.Error()))
+		panic(errors.Join(err, errors.New("error while fetching the video postcode")))
 	}
 
 	// Survey draw
@@ -184,7 +198,7 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	button.MustClick()
 	el = page.MustElement("#result-header > div > p.result--postcode")
 	if winningTickets.Survey, err = getPostcodeFromText(el.MustText()); err != nil {
-		*errs = errors.Join(*errs, errors.New("Error while fetching the survey postcode. "+err.Error()))
+		panic(errors.Join(err, errors.New("error while fetching the survey postcode")))
 	}
 
 	// Bonus
@@ -194,17 +208,17 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	winningTickets.Bonus = make([]string, 3)
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
 	if winningTickets.Bonus[0], err = getPostcodeFromText(el.MustText()); err != nil {
-		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 5 postcode. "+err.Error()))
+		panic(errors.Join(err, errors.New("error while fetching the bonus 5 postcode")))
 	}
 
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-ten > div > div.result--header > p")
 	if winningTickets.Bonus[1], err = getPostcodeFromText(el.MustText()); err != nil {
-		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 10 postcode. "+err.Error()))
+		panic(errors.Join(err, errors.New("error while fetching the bonus 10 postcode")))
 	}
 
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-twenty > div > div.result--header > p")
 	if winningTickets.Bonus[2], err = getPostcodeFromText(el.MustText()); err != nil {
-		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus 20 postcode. "+err.Error()))
+		panic(errors.Join(err, errors.New("error while fetching the bonus 20 postcode")))
 	}
 
 	// Minidraw
@@ -212,11 +226,11 @@ func GetPostcodes(page *rod.Page, isMainDraw bool, client *person, errs *error) 
 	time.Sleep(9 * time.Second)
 	el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
 	if winningTickets.Minidraw, err = getPostcodeFromText(el.MustText()); err != nil {
-		*errs = errors.Join(*errs, errors.New("Error while fetching the minidraw postcode. "+err.Error()))
+		panic(errors.Join(err, errors.New("error while fetching the minidraw postcode")))
 	}
 
 	// While here, to save time later, populate the bonus money for the first client here.
-	PopulateTotalBonusMoneyForClient(page, errs, client)
+	populateTotalBonusMoneyForClient(page, client)
 
 	// Logout
 	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
@@ -266,7 +280,7 @@ func isValidPostcode(s string) bool {
 	return true
 }
 
-func LoginAndGetBonus(page *rod.Page, client *person, errs *error) {
+func loginAndGetBonus(page *rod.Page, client *person) {
 	// Login.
 	login(page, client)
 
@@ -274,15 +288,15 @@ func LoginAndGetBonus(page *rod.Page, client *person, errs *error) {
 	page.MustNavigate("https://pickmypostcode.com/video/").MustWaitDOMStable()
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/").MustWaitDOMStable()
 
-	PopulateTotalBonusMoneyForClient(page, errs, client)
+	populateTotalBonusMoneyForClient(page, client)
 
 	// Logout.
 	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
 }
 
-func PopulateTotalBonusMoneyForClient(page *rod.Page, errs *error, client *person) {
+func populateTotalBonusMoneyForClient(page *rod.Page, client *person) {
 	if client.BonusMoney = page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success").MustText(); len(client.BonusMoney) > 10 {
-		*errs = errors.Join(*errs, errors.New("Error while fetching the bonus money for "+client.Name+" Bonus text: "+client.BonusMoney))
+		panic(errors.New("error while fetching the bonus money for " + client.Name + " Bonus text: " + client.BonusMoney))
 	}
 }
 
@@ -320,18 +334,40 @@ func formatPostcodesStackpot(winningTickets tickets) string {
 	return output
 }
 
-func sendEmail(to, subject, body string) error {
-	// Set up authentication information.
-	auth := smtp.PlainAuth("", "andrewpcfield@gmail.com", os.Getenv("GOOGLEAPPPASSWORD"), "smtp.gmail.com") // Needs to have the app password set as an environment variable, "export GOOGLEAPPPASSWORD=xxx".
+func sendEmail(subject, body string, pic []byte) error {
+	to := "andrew_field+pickmypostcodesummary@hotmail.co.uk"
+	from := "andrewpcfield@gmail.com"
 
-	// Compose the message.
-	msg := "To: " + to + "\r\n" +
-		"Subject: " + subject + "\r\n" +
-		"\r\n" +
-		body
+	// Set up authentication information.
+	auth := smtp.PlainAuth("", from, os.Getenv("GOOGLEAPPPASSWORD"), "smtp.gmail.com")
+
+	// Message
+	msg := bytes.NewBuffer(nil)
+	msg.WriteString("From: " + from + "\n")
+	msg.WriteString("To: " + to + "\n")
+	msg.WriteString("Subject: " + subject + "\n")
+	msg.WriteString("MIME-Version: 1.0\n")
+	msg.WriteString(`Content-Type: multipart/related; boundary="myboundary"` + "\n\n")
+	msg.WriteString("--myboundary\n")
+
+	// This is the body
+	msg.WriteString(`Content-Type: text/plain; charset="utf-8"` + "\n")
+	msg.WriteString("Content-Transfer-Encoding: quoted-printable" + "\n\n")
+	msg.WriteString(body + "\n\n")
+	msg.WriteString("--myboundary\n")
+
+	if pic != nil {
+		// This is the attachment
+		encodedImage := base64.StdEncoding.EncodeToString(pic)
+		msg.WriteString(`Content-Type: image/jpeg;name="image.jpg"` + "\n")
+		msg.WriteString("Content-Transfer-Encoding: base64" + "\n")
+		msg.WriteString("Content-Disposition: attachment;filename=\"image.jpg\"" + "\n\n")
+		msg.WriteString(encodedImage + "\n\n")
+		msg.WriteString("--myboundary--")
+	}
 
 	// Send the message.
-	err := smtp.SendMail("smtp.gmail.com:587", auth, "andrewpcfield@gmail.com", []string{to}, []byte(msg))
+	err := smtp.SendMail("smtp.gmail.com:587", auth, from, []string{to}, msg.Bytes())
 	if err != nil {
 		return err
 	}
