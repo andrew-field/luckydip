@@ -119,9 +119,9 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 	// Get overall WIN/LOSE.
 	summary := " - Pick my postcode summary."
 	if isMainDraw {
-		summary = "Main draw" + summary
+		summary = " - Main draw" + summary
 	} else {
-		summary = "Stackpot" + summary
+		summary = " - Stackpot" + summary
 	}
 	if result {
 		summary = "WIN!" + summary
@@ -346,17 +346,18 @@ func sendEmail(subject, body string, pic []byte) error {
 	msg.WriteString("From: " + from + "\n")
 	msg.WriteString("To: " + to + "\n")
 	msg.WriteString("Subject: " + subject + "\n")
-	msg.WriteString("MIME-Version: 1.0\n")
-	msg.WriteString(`Content-Type: multipart/related; boundary="myboundary"` + "\n\n")
-	msg.WriteString("--myboundary\n")
 
-	// This is the body
-	msg.WriteString(`Content-Type: text/plain; charset="utf-8"` + "\n")
-	msg.WriteString("Content-Transfer-Encoding: quoted-printable" + "\n\n")
-	msg.WriteString(body + "\n\n")
-	msg.WriteString("--myboundary\n")
+	if pic != nil { // There was an error
+		msg.WriteString("MIME-Version: 1.0\n")
+		msg.WriteString(`Content-Type: multipart/related; boundary="myboundary"` + "\n\n")
+		msg.WriteString("--myboundary\n")
 
-	if pic != nil {
+		// This is the body
+		msg.WriteString(`Content-Type: text/plain; charset="utf-8"` + "\n")
+		msg.WriteString("Content-Transfer-Encoding: quoted-printable" + "\n\n")
+		msg.WriteString(body + "\n\n")
+		msg.WriteString("--myboundary\n")
+
 		// This is the attachment
 		encodedImage := base64.StdEncoding.EncodeToString(pic)
 		msg.WriteString(`Content-Type: image/jpeg;name="image.jpg"` + "\n")
@@ -364,6 +365,8 @@ func sendEmail(subject, body string, pic []byte) error {
 		msg.WriteString("Content-Disposition: attachment;filename=\"image.jpg\"" + "\n\n")
 		msg.WriteString(encodedImage + "\n\n")
 		msg.WriteString("--myboundary--")
+	} else {
+		msg.WriteString(body + "\n\n")
 	}
 
 	// Send the message.
