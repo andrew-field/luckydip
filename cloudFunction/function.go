@@ -58,7 +58,7 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
 
 	// An effort to avoid bot detection.
-	page := stealth.MustPage(browser).Timeout(time.Second * 180)
+	page := stealth.MustPage(browser).Timeout(time.Second * 10)
 
 	loc, _ := time.LoadLocation("Europe/London")
 	isMainDraw := time.Now().In(loc).Hour() == 18
