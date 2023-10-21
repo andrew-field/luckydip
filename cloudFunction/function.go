@@ -53,12 +53,12 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create browser
-	browser := rod.New().MustConnect().Trace(true) // -rod="show,trace,slow=1s,monitor=:1234"
+	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 180) // -rod="show,trace,slow=1s,monitor=:1234"
 
 	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
 
 	// An effort to avoid bot detection.
-	page := stealth.MustPage(browser).Timeout(time.Second * 10)
+	page := stealth.MustPage(browser)
 
 	loc, _ := time.LoadLocation("Europe/London")
 	isMainDraw := time.Now().In(loc).Hour() == 18
