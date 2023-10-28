@@ -3,7 +3,7 @@ module github.com/andrew-field/pickmypostcode/cloudFunction
 go 1.21.1
 
 require (
-	github.com/go-rod/rod v0.114.3
+	github.com/go-rod/rod v0.114.4
 	github.com/go-rod/stealth v0.4.9
 )
 
