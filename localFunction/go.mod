@@ -1,10 +1,10 @@
-module github.com/andrew-field/pickmypostcode/localFunction
+module github.com/andrew-field/luckydip/localFunction
 
 go 1.21.1
 
-replace github.com/andrew-field/pickmypostcode/cloudFunction => ../cloudFunction
+replace github.com/andrew-field/luckydip/cloudFunction => ../cloudFunction
 
-require github.com/andrew-field/pickmypostcode/cloudFunction v0.0.0-00010101000000-000000000000
+require github.com/andrew-field/luckydip/cloudFunction v0.0.0-00010101000000-000000000000
 
 require (
 	github.com/go-rod/rod v0.114.4 // indirect

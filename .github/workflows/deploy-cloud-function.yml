@@ -13,5 +13,5 @@ jobs:
     name: Deploy Cloud function
     uses: andrew-field/reusable-workflows/.github/workflows/deploy-cloud-function.yml@master
     with:
-      function_name: pickMyPostcodeCloudFunction
+      function_name: luckydip
     secrets: inherit

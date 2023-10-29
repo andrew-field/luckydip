@@ -1,4 +1,4 @@
-module github.com/andrew-field/pickmypostcode/cloudFunction
+module github.com/andrew-field/luckydip/cloudFunction
 
 go 1.21.1
 
