@@ -26,7 +26,7 @@ type freemojiTickets struct {
 	Fivers []string
 }
 
-func freemoji() {
+func Freemoji() {
 	// Create all clients.
 	people := []freemojiPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "DgZshM95&6zdNw", Entry: "🦅🌌🏝🎼🐧"},
