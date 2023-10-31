@@ -31,7 +31,7 @@ func FreeBirthdateLottery() {
 	to := "andrew_field+freebirthdaylottery@hotmail.co.uk"
 
 	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 180) // -rod="show,trace,slow=1s,monitor=:1234"
+	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 60) // -rod="show,trace,slow=1s,monitor=:1234"
 
 	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
 
