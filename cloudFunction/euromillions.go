@@ -142,6 +142,7 @@ func euromillionsLogin(page *rod.Page, client euromillionsPerson) {
 
 	// Logout.
 	page.MustElementR("a", "Sign Out").MustClick()
+	page.MustWaitStable()
 }
 
 func enterDraw(page *rod.Page, client euromillionsPerson) {

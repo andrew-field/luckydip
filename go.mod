@@ -1,6 +1,6 @@
-module github.com/andrew-field/luckydip/cloudFunction
+module github.com/andrew-field/luckydip
 
-go 1.21.1
+go 1.21.3
 
 require (
 	github.com/go-rod/rod v0.114.4
