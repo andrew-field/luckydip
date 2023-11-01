@@ -1,4 +1,4 @@
-package main
+package luckydip
 
 import (
 	"context"
@@ -36,7 +36,7 @@ type pickMyPostcodeTickets struct {
 	Minidraw string
 }
 
-func pickMyPostcode() {
+func PickMyPostcode() {
 	// Create all clients.
 	people := []pickMyPostcodePerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Postcode: "gu113nt"},

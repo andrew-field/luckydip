@@ -1,4 +1,4 @@
-package main
+package luckydip
 
 import (
 	"net/http"
@@ -11,19 +11,19 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch time.Now().In(loc).Hour() {
 	case 6:
-		euromillions()
+		Euromillions()
 	case 9:
-		pickMyPostcode()
+		PickMyPostcode()
 	case 11:
-		freeBirthdateLottery()
+		FreeBirthdateLottery()
 	case 16:
-		winADinner()
+		WinADinner()
 	case 18:
-		pickMyPostcode()
+		PickMyPostcode()
 	case 20:
-		freemoji()
+		Freemoji()
 	case 21:
-		pickMyPostcode()
+		PickMyPostcode()
 	default:
 		sendEmail("andrew_field@hotmail.co.uk", "Error", "Could not select the correct function. Time: "+time.Now().In(loc).String(), nil)
 	}

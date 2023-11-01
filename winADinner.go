@@ -1,4 +1,4 @@
-package main
+package luckydip
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type winADinnerPerson struct {
 	Match    bool
 }
 
-func winADinner() {
+func WinADinner() {
 	// Create all clients.
 	people := []winADinnerPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "@8pMrqr8LXbaEq", Entry: "raddish5"},
