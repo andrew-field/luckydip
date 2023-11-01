@@ -1,4 +1,4 @@
-package cloudFunction
+package main
 
 import (
 	"net/http"
@@ -11,19 +11,19 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch time.Now().In(loc).Hour() {
 	case 6:
-		Euromillions()
+		euromillions()
 	case 9:
-		PickMyPostcode()
+		pickMyPostcode()
 	case 11:
-		FreeBirthdateLottery()
+		freeBirthdateLottery()
 	case 16:
-		WinADinner()
+		winADinner()
 	case 18:
-		PickMyPostcode()
+		pickMyPostcode()
 	case 20:
-		Freemoji()
+		freemoji()
 	case 21:
-		PickMyPostcode()
+		pickMyPostcode()
 	default:
 		sendEmail("andrew_field@hotmail.co.uk", "Error", "Could not select the correct function. Time: "+time.Now().In(loc).String(), nil)
 	}

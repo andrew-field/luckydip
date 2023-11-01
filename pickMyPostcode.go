@@ -1,4 +1,4 @@
-package cloudFunction
+package main
 
 import (
 	"context"
@@ -36,7 +36,7 @@ type pickMyPostcodeTickets struct {
 	Minidraw string
 }
 
-func PickMyPostcode() {
+func pickMyPostcode() {
 	// Create all clients.
 	people := []pickMyPostcodePerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Postcode: "gu113nt"},

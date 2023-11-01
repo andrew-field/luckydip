@@ -1,4 +1,4 @@
-package cloudFunction
+package main
 
 import (
 	"context"
@@ -18,7 +18,7 @@ type freeBirthdateLotteryPerson struct {
 	Match    bool
 }
 
-func FreeBirthdateLottery() {
+func freeBirthdateLottery() {
 	// Create all clients.
 	people := []freeBirthdateLotteryPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "$Ha!bUdk#f3c7Y", Entry: "02/07/1994"},

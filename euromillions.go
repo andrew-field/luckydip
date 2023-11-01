@@ -1,4 +1,4 @@
-package cloudFunction
+package main
 
 import (
 	"context"
@@ -26,7 +26,7 @@ type euromillionsTickets struct {
 	Weekly []string
 }
 
-func Euromillions() {
+func euromillions() {
 	// Create all clients.
 	people := []euromillionsPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "4Rdod7o!T6Hjyp", Entry: []string{"6", "11", "18", "19", "25", "32"}},

@@ -1,4 +1,4 @@
-package cloudFunction
+package main
 
 import (
 	"bytes"

@@ -1,4 +1,4 @@
-package cloudFunction
+package main
 
 import (
 	"context"
@@ -26,7 +26,7 @@ type freemojiTickets struct {
 	Fivers []string
 }
 
-func Freemoji() {
+func freemoji() {
 	// Create all clients.
 	people := []freemojiPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "DgZshM95&6zdNw", Entry: "🦅🌌🏝🎼🐧"},
