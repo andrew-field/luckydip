@@ -51,6 +51,17 @@ func Euromillions() {
 	err := rod.Try(func() {
 		winningTickets = euromillionsGetWinningTickets(page)
 
+		// Reject cookies etc. one time.
+		page.MustNavigate("https://www.euro-millions.com/account/login")
+		page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-choice-dialog > div.fc-footer-buttons-container > div.fc-footer-buttons > button.fc-button.fc-cta-manage-options.fc-secondary-button").MustClick()
+		page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(3) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(8) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(9) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(10) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(11) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(12) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-footer-buttons-container > div.fc-footer-buttons > button.fc-button.fc-confirm-choices.fc-primary-button").MustClick()
+
 		// Login for each client and enter draw.
 		for i := range people {
 			euromillionsLogin(page, people[i])
@@ -134,7 +145,7 @@ func euromillionsLogin(page *rod.Page, client euromillionsPerson) {
 	enterDraw(page, client)
 
 	// Enter weekly draw.
-	if time.Now().Weekday() == time.Thursday {
+	if time.Now().Weekday() == time.Saturday {
 		page.MustNavigate("https://www.euro-millions.com/free-lottery/play?lottery=weekly")
 
 		enterDraw(page, client)
@@ -142,12 +153,12 @@ func euromillionsLogin(page *rod.Page, client euromillionsPerson) {
 
 	// Logout.
 	page.MustElementR("a", "Sign Out").MustClick()
-	page.MustWaitStable()
+	page.MustWaitDOMStable()
 }
 
 func enterDraw(page *rod.Page, client euromillionsPerson) {
 	page.MustElement("#reset_ticket").MustClick() // Selected numbers sometimes need resetting.
-	for _, v := range client.Entry {              // Even when going from daily to weekly, sometimes the numbers need settting again.
+	for _, v := range client.Entry {              // Even when going from daily to weekly, sometimes the numbers need setting again.
 		page.MustElement("#B0ID_" + v).MustWaitEnabled().MustClick() // Sometimes the buttons have not been enabled when clicking.
 	}
 

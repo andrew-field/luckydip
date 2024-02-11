@@ -11,7 +11,7 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch time.Now().In(loc).Hour() {
 	case 6:
-		//Euromillions()
+		Euromillions()
 	case 9:
 		PickMyPostcode()
 	case 11:
