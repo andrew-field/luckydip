@@ -10,7 +10,7 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 	loc, _ := time.LoadLocation("Europe/London")
 
 	switch time.Now().In(loc).Hour() {
-	case 6:
+	case 8:
 		Euromillions()
 	case 9:
 		PickMyPostcode()
