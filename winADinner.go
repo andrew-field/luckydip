@@ -69,7 +69,7 @@ func WinADinner() {
 	}
 
 	// Get overall WIN/LOSE.
-	summary := " - Win a dinner summary."
+	summary := " - Get a dinner summary."
 	if result {
 		summary = "WIN!" + summary
 	} else {

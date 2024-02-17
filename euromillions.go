@@ -51,23 +51,23 @@ func Euromillions() {
 	err := rod.Try(func() {
 		winningTickets = euromillionsGetWinningTickets(page)
 
-		// Reject cookies etc. one time. Refresh page until cookies popup shows.
-		for {
-			page.MustNavigate("https://www.euro-millions.com/account/login")
-			el, err := page.Element("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-choice-dialog > div.fc-footer-buttons-container > div.fc-footer-buttons > button.fc-button.fc-cta-manage-options.fc-secondary-button")
-			if err != nil {
-				continue
-			}
-			el.MustClick()
-			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(3) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
-			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(8) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
-			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(9) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
-			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(10) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
-			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(11) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
-			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(12) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
-			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-footer-buttons-container > div.fc-footer-buttons > button.fc-button.fc-confirm-choices.fc-primary-button").MustClick()
-			break
-		}
+		// Reject cookies etc. one time. Refresh page until cookies popup shows. For some reason, this doesn't seem to show when run as a cloud function.
+		// for {
+		// 	page.MustNavigate("https://www.euro-millions.com/account/login")
+		// 	el, err := page.Element("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-choice-dialog > div.fc-footer-buttons-container > div.fc-footer-buttons > button.fc-button.fc-cta-manage-options.fc-secondary-button")
+		// 	if err != nil {
+		// 		continue
+		// 	}
+		// 	el.MustClick()
+		// 	page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(3) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		// 	page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(8) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		// 	page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(9) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		// 	page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(10) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		// 	page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(11) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		// 	page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(12) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
+		// 	page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-footer-buttons-container > div.fc-footer-buttons > button.fc-button.fc-confirm-choices.fc-primary-button").MustClick()
+		// 	break
+		// }
 
 		// Login for each client and enter draw.
 		for i := range people {
@@ -152,7 +152,7 @@ func euromillionsLogin(page *rod.Page, client euromillionsPerson) {
 	enterDraw(page, client)
 
 	// Enter weekly draw.
-	if time.Now().Weekday() == time.Sunday {
+	if time.Now().Weekday() == time.Thursday { // Has to be Thursday because it should be played as soon as possible. Apparently, if the weekly can be played, the daily can not be played until the weekly has been played.
 		page.MustNavigate("https://www.euro-millions.com/free-lottery/play?lottery=weekly")
 
 		enterDraw(page, client)
