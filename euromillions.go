@@ -51,15 +51,11 @@ func Euromillions() {
 	err := rod.Try(func() {
 		winningTickets = euromillionsGetWinningTickets(page)
 
-		// Reject cookies etc. one time. Refresh page until cookies popup shows.
+		// Reject cookies etc. one time. Popup takes a moment or two to show.
 		for {
 			page.MustNavigate("https://www.euro-millions.com/account/login")
 			page.MustWaitStable()
-			el, err := page.Element("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-choice-dialog > div.fc-footer-buttons-container > div.fc-footer-buttons > button.fc-button.fc-cta-manage-options.fc-secondary-button")
-			if err != nil {
-				continue
-			}
-			el.MustClick()
+			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-choice-dialog > div.fc-footer-buttons-container > div.fc-footer-buttons > button.fc-button.fc-cta-manage-options.fc-secondary-button").MustClick()
 			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(3) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
 			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(8) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
 			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-dialog-content > div > div.fc-preferences-container > div:nth-child(9) > label.fc-preference-slider-container.fc-legitimate-interest-preference-container > span.fc-preference-slider").MustClick()
