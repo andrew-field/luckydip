@@ -142,7 +142,7 @@ func euromillionsLogin(page *rod.Page, client euromillionsPerson) {
 	page.MustElement("#Email").MustInput(client.Email)
 	page.MustElement("#Password").MustInput(client.Password)
 	page.MustElement("#Submit").MustClick()
-	page.MustWaitStable()
+	page.MustWaitDOMStable() // MustWaitStable can sometimes take ~15+ seconds which adds up and may cause timeout.
 
 	// Enter daily draw.
 	page.MustNavigate("https://www.euro-millions.com/free-lottery/play?lottery=daily")
@@ -156,7 +156,7 @@ func euromillionsLogin(page *rod.Page, client euromillionsPerson) {
 
 	// Logout.
 	page.MustElement("body > header > div > div.fx.acen > a").MustClick()
-	page.MustWaitStable()
+	page.MustWaitDOMStable()
 }
 
 func enterDraw(page *rod.Page, client euromillionsPerson) {
