@@ -39,7 +39,7 @@ func Euromillions() {
 	to := "andrew_field+euromillions@hotmail.co.uk"
 
 	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 120) // -rod="show,trace,slow=1s,monitor=:1234"
+	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 180) // -rod="show,trace,slow=1s,monitor=:1234"
 
 	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
 
@@ -142,7 +142,7 @@ func euromillionsLogin(page *rod.Page, client euromillionsPerson) {
 	page.MustElement("#Email").MustInput(client.Email)
 	page.MustElement("#Password").MustInput(client.Password)
 	page.MustElement("#Submit").MustClick()
-	page.Timeout(time.Second * 10).WaitStable(time.Second) // WaitStable can sometimes take ~15+ seconds which adds up and may cause timeout.
+	page.Timeout(time.Second * 7).WaitStable(time.Second) // WaitStable can sometimes take ~15+ seconds which adds up and may cause timeout.
 
 	// Enter daily draw.
 	page.MustNavigate("https://www.euro-millions.com/free-lottery/play?lottery=daily")
@@ -156,7 +156,7 @@ func euromillionsLogin(page *rod.Page, client euromillionsPerson) {
 
 	// Logout.
 	page.MustElement("body > header > div > div.fx.acen > a").MustClick()
-	page.Timeout(time.Second * 10).WaitStable(time.Second)
+	page.Timeout(time.Second * 7).WaitStable(time.Second)
 }
 
 func enterDraw(page *rod.Page, client euromillionsPerson) {
