@@ -155,7 +155,7 @@ func euromillionsLogin(page *rod.Page, client euromillionsPerson) {
 	}
 
 	// Logout.
-	page.MustElement("body > header > div > div.fx.acen > a").MustClick()
+	page.MustElement("body > header > div > div.fx.acen > a").MustWaitEnabled().MustClick() // Sometimes getting "Cannot find context with specified id", trying with MustWaitEnabled.
 	page.Timeout(time.Second * 7).WaitStable(time.Second)
 }
 
