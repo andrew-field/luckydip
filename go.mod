@@ -1,6 +1,6 @@
 module github.com/andrew-field/luckydip
 
-go 1.21.6
+go 1.22.0
 
 require (
 	github.com/go-rod/rod v0.114.7
