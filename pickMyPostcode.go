@@ -156,7 +156,7 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 		// Stackpot
 		page.MustNavigate("https://pickmypostcode.com/stackpot/")
 		page.MustWaitDOMStable()
-		page.MustWaitElementsMoreThan("p.result--postcode", 3)
+		page.MustWaitElementsMoreThan("p.result--postcode", 2)
 		stackpotPostcodes := page.MustElements("p.result--postcode")
 		winningTickets.Stackpot = make([]string, len(stackpotPostcodes))
 		for i, el := range stackpotPostcodes {
