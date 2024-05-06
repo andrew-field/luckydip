@@ -3,7 +3,7 @@ module github.com/andrew-field/luckydip
 go 1.22.2
 
 require (
-	github.com/go-rod/rod v0.115.0
+	github.com/go-rod/rod v0.116.0
 	github.com/go-rod/stealth v0.4.9
 )
 
