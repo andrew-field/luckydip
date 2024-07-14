@@ -28,8 +28,6 @@ func FreeBirthdateLottery() {
 		{Name: "Katherine", Email: "k_avery@outlook.com", Password: "FNZXf5ZMpWS$uv", Entry: "09/08/1985"},
 	}
 
-	to := "andrew_field+freebirthdaylottery@hotmail.co.uk"
-
 	// Create browser
 	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 60) // -rod="show,trace,slow=1s,monitor=:1234"
 
@@ -51,7 +49,7 @@ func FreeBirthdateLottery() {
 			summary = "Timeout error"
 		}
 
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return
 	}
@@ -77,7 +75,7 @@ func FreeBirthdateLottery() {
 	body := fmt.Sprintf(freeBirthdateLotteryFormatResults(people) + "\n\n" + "Ticket: " + winningTicket)
 
 	// Send email.
-	sendEmail(to, summary, body, nil)
+	sendEmail(summary, body, nil)
 }
 
 func freeBirthdateLotteryGetWinningTicket(page *rod.Page, client freeBirthdateLotteryPerson) string {

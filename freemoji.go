@@ -38,8 +38,6 @@ func Freemoji() {
 		{Name: "Nathan          ", Email: "budn8@hotmail.com", Password: "NYfxoKaY8YMR", Entry: "👻🐹🐁🍓♥"},
 	}
 
-	to := "andrew_field+freemojisummary@hotmail.co.uk"
-
 	// Create browser
 	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 60) // -rod="show,trace,slow=1s,monitor=:1234"
 
@@ -63,7 +61,7 @@ func Freemoji() {
 			summary = "Timeout error"
 		}
 
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return
 	}
@@ -94,7 +92,7 @@ func Freemoji() {
 	body := fmt.Sprintf(freemojiFormatResults(people) + "\n\n" + freemojiFormatTickets(winningTickets))
 
 	// Send email.
-	sendEmail(to, summary, body, nil)
+	sendEmail(summary, body, nil)
 }
 
 func getFiverWinningTickets(page *rod.Page, ticketsToday *freemojiTickets) {

@@ -29,8 +29,6 @@ func WinADinner() {
 		{Name: "Katherine", Email: "k_avery@outlook.com", Password: "Lsyjf5Lq*EuFh2", Entry: "YumYum8"},
 	}
 
-	to := "andrew_field+winadinner@hotmail.co.uk"
-
 	// Create browser
 	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 60) // -rod="show,trace,slow=1s,monitor=:1234"
 
@@ -54,7 +52,7 @@ func WinADinner() {
 			summary = "Timeout error"
 		}
 
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return
 	}
@@ -80,7 +78,7 @@ func WinADinner() {
 	body := fmt.Sprintf(winADinnerFormatResults(people)+"\n\nTickets: %v", winningTickets)
 
 	// Send email.
-	sendEmail(to, summary, body, nil)
+	sendEmail(summary, body, nil)
 }
 
 func winADinnerGetWinningTickets(page *rod.Page) []string {
@@ -102,7 +100,7 @@ func winADinnerLogin(page *rod.Page, clientToday winADinnerPerson) { // Already 
 	page.MustElement("#user_name").MustInput(clientToday.Email)
 	page.MustElement("#password").MustInput(clientToday.Password)
 	page.MustElement("#sign-in-submit").MustClick()
-	time.Sleep(4 * time.Second) // Can't be bothered to log out after this. WaitDOMStable/Stable don't seem to work.
+	page.Timeout(time.Second * 5).WaitStable(time.Second) // Can't be bothered to log out after this. WaitDOMStable/Stable don't seem to work without a timeout.
 }
 
 func winADinnerFormatResults(people []winADinnerPerson) string {

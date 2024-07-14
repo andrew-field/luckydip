@@ -46,8 +46,6 @@ func PickMyPostcode() {
 		{Name: "Katherine", Email: "k_avery@outlook.com", Entry: "gu307da"},
 	}
 
-	to := "andrew_field+pickmypostcodesummary@hotmail.co.uk"
-
 	// Create browser
 	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 180) // -rod="show,trace,slow=1s,monitor=:1234"
 
@@ -79,7 +77,7 @@ func PickMyPostcode() {
 			summary = "Timeout error"
 		}
 
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return
 	}
@@ -135,7 +133,7 @@ func PickMyPostcode() {
 	body := fmt.Sprintf(results + "\n\n" + postcodes)
 
 	// Send email.
-	sendEmail(to, summary, body, nil)
+	sendEmail(summary, body, nil)
 }
 
 func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pickMyPostcodePerson) pickMyPostcodeTickets {
@@ -232,9 +230,7 @@ func login(page *rod.Page, client *pickMyPostcodePerson) {
 	page.MustElement("#confirm-ticket").MustInput(client.Entry)
 	page.MustElement("#confirm-email").MustInput(client.Email)
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
-	fmt.Println("here1")
 	page.Timeout(time.Second * 7).WaitStable(time.Second)
-	fmt.Println("here2")
 }
 
 func getPostcodeFromText(s string) (string, error) {

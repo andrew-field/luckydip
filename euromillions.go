@@ -36,8 +36,6 @@ func Euromillions() {
 		{Name: "Katherine", Email: "k_avery@outlook.com", Password: "T$tyfRx5&qkaoi", Entry: []string{"9", "13", "19", "23", "27", "28"}},
 	}
 
-	to := "andrew_field+euromillions@hotmail.co.uk"
-
 	// Create browser
 	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 180) // -rod="show,trace,slow=1s,monitor=:1234"
 
@@ -79,7 +77,7 @@ func Euromillions() {
 			summary = "Timeout error"
 		}
 
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return
 	}
@@ -109,7 +107,7 @@ func Euromillions() {
 	body := fmt.Sprintf(euromillionsFormatResults(people) + "\n\n" + euromillionsFormatTickets(winningTickets))
 
 	// Send email.
-	sendEmail(to, summary, body, nil)
+	sendEmail(summary, body, nil)
 }
 
 func euromillionsGetWinningTickets(page *rod.Page) euromillionsTickets {
