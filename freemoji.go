@@ -30,12 +30,12 @@ func Freemoji() {
 	// Create all clients.
 	people := []freemojiPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "DgZshM95&6zdNw", Entry: "🦅🌌🏝🎼🐧"},
-		{Name: "Dad              ", Email: "mikefield@emfield.net", Password: "kc!aIkt^HCAp", Entry: "🍡🍌🌔🕸🐃"},
+		{Name: "Dad               ", Email: "mikefield@emfield.net", Password: "kc!aIkt^HCAp", Entry: "🍡🍌🌔🕸🐃"},
 		{Name: "David            ", Email: "david.jafield@gmail.com", Password: "AEE3NRCOhCns", Entry: "👣👕🎅👏👹"},
-		{Name: "James          ", Email: "j_field@hotmail.co.uk", Password: "lABxTUk4UKqF", Entry: "🐍🕶👔🕵😼"},
+		{Name: "James            ", Email: "j_field@hotmail.co.uk", Password: "lABxTUk4UKqF", Entry: "🐍🕶👔🕵😼"},
 		{Name: "Katherine", Email: "k_avery@outlook.com", Password: "g$H!fWMk7@hu", Entry: "🌼🐿🐻👘👚"},
 		{Name: "Eric                ", Email: "twintree47@pm.me", Password: "gWqktKmmOsWg", Entry: "🐸🌳🍓🦊😯"},
-		{Name: "Nathan         ", Email: "budn8@hotmail.com", Password: "NYfxoKaY8YMR", Entry: "👻🐹🐁🍓♥"},
+		{Name: "Nathan          ", Email: "budn8@hotmail.com", Password: "NYfxoKaY8YMR", Entry: "👻🐹🐁🍓♥"},
 	}
 
 	to := "andrew_field+freemojisummary@hotmail.co.uk"
@@ -133,9 +133,9 @@ func getMainWinningTicket(page *rod.Page, ticketsToday *freemojiTickets, client 
 }
 
 func freemojiFormatResults(people []freemojiPerson) string {
-	output := "Matches        Main    Fiver      Any\n"
+	output := "Matches        Main    Fiver      Any      Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-10t%-11t%-13t\n", p.Name, p.MatchMain, p.MatchFiver, p.MatchAny)
+		output += fmt.Sprintf("%-15s%-10t%-11t%-15t%v\n", p.Name, p.MatchMain, p.MatchFiver, p.MatchAny, p.Entry)
 	}
 	return output
 }

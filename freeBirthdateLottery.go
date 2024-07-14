@@ -22,9 +22,9 @@ func FreeBirthdateLottery() {
 	// Create all clients.
 	people := []freeBirthdateLotteryPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "$Ha!bUdk#f3c7Y", Entry: "02/07/1994"},
-		{Name: "Dad                  ", Email: "mikefield@emfield.net", Password: "xjx%@jVde&2nD*", Entry: "02/07/1954"},
+		{Name: "Dad               ", Email: "mikefield@emfield.net", Password: "xjx%@jVde&2nD*", Entry: "02/07/1954"},
 		// {Name: "David    ", Email: "david.jafield@gmail.com", Password: "*7Dg6VW&K9m2R**", Entry: "23/12/1991"}, // Email currently unverified.
-		{Name: "James          ", Email: "j_field@hotmail.co.uk", Password: "X4TwSDp$n8EU5z", Entry: "28/02/1988"},
+		{Name: "James            ", Email: "j_field@hotmail.co.uk", Password: "X4TwSDp$n8EU5z", Entry: "28/02/1988"},
 		{Name: "Katherine", Email: "k_avery@outlook.com", Password: "FNZXf5ZMpWS$uv", Entry: "09/08/1985"},
 	}
 
@@ -97,9 +97,9 @@ func freeBirthdateLotteryGetWinningTicket(page *rod.Page, client freeBirthdateLo
 }
 
 func freeBirthdateLotteryFormatResults(people []freeBirthdateLotteryPerson) string {
-	output := "Matches        Main\n"
+	output := "Matches        Main        Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-10t\n", p.Name, p.Match)
+		output += fmt.Sprintf("%-15s%-15t%v\n", p.Name, p.Match, p.Entry)
 	}
 	return output
 }

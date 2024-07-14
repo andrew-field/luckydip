@@ -30,9 +30,9 @@ func Euromillions() {
 	// Create all clients.
 	people := []euromillionsPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "4Rdod7o!T6Hjyp", Entry: []string{"6", "11", "18", "19", "25", "32"}},
-		{Name: "Dad                ", Email: "mikefield@emfield.net", Password: "Hzu#%m9VTx9Gty", Entry: []string{"2", "6", "14", "18", "24", "30"}},
+		{Name: "Dad               ", Email: "mikefield@emfield.net", Password: "Hzu#%m9VTx9Gty", Entry: []string{"2", "6", "14", "18", "24", "30"}},
 		{Name: "David            ", Email: "david.jafield@gmail.com", Password: "fWT5r7eG8k@d@h", Entry: []string{"1", "7", "12", "17", "31", "32"}},
-		{Name: "James         ", Email: "j_field@hotmail.co.uk", Password: "A8&2WikQbA47a!", Entry: []string{"4", "5", "15", "24", "25", "26"}},
+		{Name: "James          ", Email: "j_field@hotmail.co.uk", Password: "A8&2WikQbA47a!", Entry: []string{"4", "5", "15", "24", "25", "26"}},
 		{Name: "Katherine", Email: "k_avery@outlook.com", Password: "T$tyfRx5&qkaoi", Entry: []string{"9", "13", "19", "23", "27", "28"}},
 	}
 
@@ -170,9 +170,9 @@ func enterDraw(page *rod.Page, client euromillionsPerson) {
 }
 
 func euromillionsFormatResults(people []euromillionsPerson) string {
-	output := "Matches        Daily    Weekly      Any\n"
+	output := "Matches        Daily    Weekly      Any           Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-10t%-15t%-13t\n", p.Name, p.MatchDaily, p.MatchWeekly, p.MatchAny)
+		output += fmt.Sprintf("%-15s%-10t%-15t%-15t%v\n", p.Name, p.MatchDaily, p.MatchWeekly, p.MatchAny, p.Entry)
 	}
 	return output
 }

@@ -16,7 +16,7 @@ import (
 type pickMyPostcodePerson struct {
 	Name          string
 	Email         string
-	Postcode      string
+	Entry         string
 	MatchMain     bool
 	MatchVideo    bool
 	MatchSurvey   bool
@@ -39,11 +39,11 @@ type pickMyPostcodeTickets struct {
 func PickMyPostcode() {
 	// Create all clients.
 	people := []pickMyPostcodePerson{
-		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Postcode: "gu113nt"},
-		{Name: "Dad               ", Email: "mikefield@emfield.net", Postcode: "gu113gz"},
-		{Name: "David            ", Email: "david.jafield@gmail.com", Postcode: "gu101dd"},
-		{Name: "James            ", Email: "j_field@hotmail.co.uk", Postcode: "gu113nt"},
-		{Name: "Katherine", Email: "k_avery@outlook.com", Postcode: "gu307tg"},
+		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Entry: "gu113nt"},
+		{Name: "Dad               ", Email: "mikefield@emfield.net", Entry: "gu113gz"},
+		{Name: "David            ", Email: "david.jafield@gmail.com", Entry: "gu101dd"},
+		{Name: "James            ", Email: "j_field@hotmail.co.uk", Entry: "gu113nt"},
+		{Name: "Katherine", Email: "k_avery@outlook.com", Entry: "gu307da"},
 	}
 
 	to := "andrew_field+pickmypostcodesummary@hotmail.co.uk"
@@ -88,20 +88,20 @@ func PickMyPostcode() {
 	result := false
 	if !isMainDraw {
 		for i := range people {
-			if slices.Contains(winningTickets.Stackpot, people[i].Postcode) {
+			if slices.Contains(winningTickets.Stackpot, people[i].Entry) {
 				people[i].MatchStackpot = true
 				result = true // Don't break early in case of multiple winners.
 			}
 		}
 	} else {
 		for i := range people {
-			people[i].MatchMain = winningTickets.Main == people[i].Postcode
-			people[i].MatchVideo = winningTickets.Video == people[i].Postcode
-			people[i].MatchSurvey = winningTickets.Survey == people[i].Postcode
-			if slices.Contains(winningTickets.Bonus, people[i].Postcode) {
+			people[i].MatchMain = winningTickets.Main == people[i].Entry
+			people[i].MatchVideo = winningTickets.Video == people[i].Entry
+			people[i].MatchSurvey = winningTickets.Survey == people[i].Entry
+			if slices.Contains(winningTickets.Bonus, people[i].Entry) {
 				people[i].MatchBonus = true // Don't break early in case of multiple winners.
 			}
-			people[i].MatchMinidraw = winningTickets.Minidraw == people[i].Postcode
+			people[i].MatchMinidraw = winningTickets.Minidraw == people[i].Entry
 			people[i].MatchAny = people[i].MatchMain || people[i].MatchVideo || people[i].MatchSurvey || people[i].MatchBonus || people[i].MatchMinidraw
 			if people[i].MatchAny {
 				result = true // Don't break early in case of multiple winners.
@@ -229,7 +229,7 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 
 func login(page *rod.Page, client *pickMyPostcodePerson) {
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content.wrapper--content__relative > nav > ul > li.nav--buttons.nav--item > button.btn.btn-secondary.btn-cancel").MustClick()
-	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
+	page.MustElement("#confirm-ticket").MustInput(client.Entry)
 	page.MustElement("#confirm-email").MustInput(client.Email)
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
 	fmt.Println("here1")
@@ -292,9 +292,9 @@ func populateTotalBonusMoneyForClient(page *rod.Page, client *pickMyPostcodePers
 }
 
 func formatResultsMainDraw(people []pickMyPostcodePerson) string {
-	output := "Matches        Main    Video    Survey    Bonus     Minidraw    Any      Bonus Money\n"
+	output := "Matches        Main    Video    Survey    Bonus     Minidraw    Any      Bonus Money       Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-12t%-16t%-11t%-10s\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.BonusMoney)
+		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-12t%-16t%-11t%-25s%v\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.BonusMoney, p.Entry)
 	}
 	return output
 }
@@ -308,16 +308,16 @@ func formatResultsStackpot(people []pickMyPostcodePerson) string {
 }
 
 func formatPostcodesMainDraw(winningTickets pickMyPostcodeTickets) string {
-	output := "Postcodes     Main             Video           Survey       Bonus          Minidraw\n"
-	output += fmt.Sprintf("                     %-14s%-14s%-14s%-14s%-14s\n", winningTickets.Main, winningTickets.Video, winningTickets.Survey, winningTickets.Bonus[0], winningTickets.Minidraw)
-	output += fmt.Sprintf("%85s\n", winningTickets.Bonus[1])
-	output += fmt.Sprintf("%85s\n", winningTickets.Bonus[2])
+	output := "Postcodes     Main             Video           Survey        Bonus          Minidraw\n"
+	output += fmt.Sprintf("                     %-14s%-14s%-14s%-15s%-14s\n", winningTickets.Main, winningTickets.Video, winningTickets.Survey, winningTickets.Bonus[0], winningTickets.Minidraw)
+	output += fmt.Sprintf("%87s\n", winningTickets.Bonus[1])
+	output += fmt.Sprintf("%87s\n", winningTickets.Bonus[2])
 
 	return output
 }
 
 func formatPostcodesStackpot(winningTickets pickMyPostcodeTickets) string {
-	output := "Postcodes     Stackpot\n"
+	output := "Postcodes       Stackpot\n"
 	for _, postcode := range winningTickets.Stackpot {
 		output += fmt.Sprintf("%30s\n", postcode)
 	}
