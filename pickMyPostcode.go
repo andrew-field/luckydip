@@ -145,9 +145,8 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	login(page, client)
 
 	// Deny all cookies etc.
-	page.MustSearch("#denyAll").MustClick()
-	page.MustSearch("button.mat-focus-indicator.okButton.mat-raised-button.mat-button-base").MustClick()
-	page.MustWaitDOMStable()
+	page.MustElement("#qc-cmp2-ui > div.qc-cmp2-footer.qc-cmp2-footer-overlay.qc-cmp2-footer-scrolled > div > button:nth-child(2)").MustClick() // Deny all.
+	page.Timeout(7 * time.Second).WaitStable(time.Second)
 
 	winningTickets := pickMyPostcodeTickets{}
 	var err error
@@ -233,7 +232,9 @@ func login(page *rod.Page, client *pickMyPostcodePerson) {
 	page.MustElement("#confirm-ticket").MustInput(client.Postcode)
 	page.MustElement("#confirm-email").MustInput(client.Email)
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
-	page.MustWaitDOMStable()
+	fmt.Println("here1")
+	page.Timeout(time.Second * 7).WaitStable(time.Second)
+	fmt.Println("here2")
 }
 
 func getPostcodeFromText(s string) (string, error) {
