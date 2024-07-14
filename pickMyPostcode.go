@@ -142,12 +142,13 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	// Login
 	login(page, client)
 
-	// Deny all cookies etc.
-	page.MustElement("#qc-cmp2-ui > div.qc-cmp2-footer.qc-cmp2-footer-overlay.qc-cmp2-footer-scrolled > div > button:nth-child(2)").MustClick() // Deny all.
-	page.Timeout(7 * time.Second).WaitStable(time.Second)
+	// Deny all cookies etc. Sometimes the cloud function does not show this box, so times out.
+	denyAllBox, err := page.Timeout(time.Second * 7).Element("#qc-cmp2-ui > div.qc-cmp2-footer.qc-cmp2-footer-overlay.qc-cmp2-footer-scrolled > div > button:nth-child(2)")
+	if err == nil {
+		denyAllBox.MustClick() // Deny all.
+	}
 
 	winningTickets := pickMyPostcodeTickets{}
-	var err error
 
 	if !isMainDraw {
 		// Stackpot
@@ -290,7 +291,7 @@ func populateTotalBonusMoneyForClient(page *rod.Page, client *pickMyPostcodePers
 func formatResultsMainDraw(people []pickMyPostcodePerson) string {
 	output := "Matches        Main    Video    Survey    Bonus     Minidraw    Any      Bonus Money       Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-12t%-16t%-11t%-25s%v\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.BonusMoney, p.Entry)
+		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-12t%-16t%-11t%-23s%v\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.BonusMoney, p.Entry)
 	}
 	return output
 }
