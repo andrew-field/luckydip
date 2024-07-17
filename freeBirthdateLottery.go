@@ -97,7 +97,7 @@ func freeBirthdateLotteryGetWinningTicket(page *rod.Page, client freeBirthdateLo
 func freeBirthdateLotteryFormatResults(people []freeBirthdateLotteryPerson) string {
 	output := "Matches        Main        Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-14t%v\n", p.Name, p.Match, p.Entry)
+		output += fmt.Sprintf("%-15s%-13t%v\n", p.Name, p.Match, p.Entry)
 	}
 	return output
 }
