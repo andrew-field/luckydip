@@ -20,12 +20,6 @@ type winADinnerPerson struct {
 }
 
 func WinADinner() {
-	defer func() {
-		if r := recover(); r != nil {
-			sendEmail("Unknown critical error", fmt.Sprintf("%v", r), nil)
-		}
-	}()
-
 	// Create all clients.
 	people := []winADinnerPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "@8pMrqr8LXbaEq", Entry: "raddish5"},
@@ -106,7 +100,7 @@ func winADinnerLogin(page *rod.Page, clientToday winADinnerPerson) { // Already 
 	page.MustElement("#user_name").MustInput(clientToday.Email)
 	page.MustElement("#password").MustInput(clientToday.Password)
 	page.MustElement("#sign-in-submit").MustClick()
-	page.Timeout(time.Second * 5).WaitStable(time.Second) // Can't be bothered to log out after this. WaitDOMStable/Stable don't seem to work without a timeout.
+	page.Timeout(time.Second*5).WaitDOMStable(time.Second, 0) // Can't be bothered to log out after this. WaitDOMStable/Stable don't seem to work without a timeout.
 }
 
 func winADinnerFormatResults(people []winADinnerPerson) string {
