@@ -20,6 +20,12 @@ type winADinnerPerson struct {
 }
 
 func WinADinner() {
+	defer func() {
+		if r := recover(); r != nil {
+			sendEmail("Unknown critical error", fmt.Sprintf("%v", r), nil)
+		}
+	}()
+
 	// Create all clients.
 	people := []winADinnerPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "@8pMrqr8LXbaEq", Entry: "raddish5"},

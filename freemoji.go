@@ -133,7 +133,7 @@ func getMainWinningTicket(page *rod.Page, ticketsToday *freemojiTickets, client 
 func freemojiFormatResults(people []freemojiPerson) string {
 	output := "Matches        Main    Fiver      Any      Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-10t%-11t%-12t%v\n", p.Name, p.MatchMain, p.MatchFiver, p.MatchAny, p.Entry)
+		output += fmt.Sprintf("%-15s%-10t%-11t%-11t%v\n", p.Name, p.MatchMain, p.MatchFiver, p.MatchAny, p.Entry)
 	}
 	return output
 }

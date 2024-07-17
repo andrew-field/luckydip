@@ -32,12 +32,12 @@ func Euromillions() {
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "4Rdod7o!T6Hjyp", Entry: []string{"6", "11", "18", "19", "25", "32"}},
 		{Name: "Dad               ", Email: "mikefield@emfield.net", Password: "Hzu#%m9VTx9Gty", Entry: []string{"2", "6", "14", "18", "24", "30"}},
 		{Name: "David            ", Email: "david.jafield@gmail.com", Password: "fWT5r7eG8k@d@h", Entry: []string{"1", "7", "12", "17", "31", "32"}},
-		{Name: "James          ", Email: "j_field@hotmail.co.uk", Password: "A8&2WikQbA47a!", Entry: []string{"4", "5", "15", "24", "25", "26"}},
+		{Name: "James            ", Email: "j_field@hotmail.co.uk", Password: "A8&2WikQbA47a!", Entry: []string{"4", "5", "15", "24", "25", "26"}},
 		{Name: "Katherine", Email: "k_avery@outlook.com", Password: "T$tyfRx5&qkaoi", Entry: []string{"9", "13", "19", "23", "27", "28"}},
 	}
 
 	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 180) // -rod="show,trace,slow=1s,monitor=:1234"
+	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 150) // -rod="show,trace,slow=1s,monitor=:1234"
 
 	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
 

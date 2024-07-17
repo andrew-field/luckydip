@@ -47,7 +47,7 @@ func PickMyPostcode() {
 	}
 
 	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 180) // -rod="show,trace,slow=1s,monitor=:1234"
+	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 150) // -rod="show,trace,slow=1s,monitor=:1234"
 
 	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
 
@@ -297,9 +297,9 @@ func formatResultsMainDraw(people []pickMyPostcodePerson) string {
 }
 
 func formatResultsStackpot(people []pickMyPostcodePerson) string {
-	output := "Matches        Stackpot\n"
+	output := "Matches        Stackpot       Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-15t\n", p.Name, p.MatchStackpot)
+		output += fmt.Sprintf("%-15s%-15t%v\n", p.Name, p.MatchStackpot, p.Entry)
 	}
 	return output
 }
