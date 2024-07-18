@@ -231,7 +231,7 @@ func login(page *rod.Page, client *pickMyPostcodePerson) {
 	page.MustElement("#confirm-ticket").MustInput(client.Entry)
 	page.MustElement("#confirm-email").MustInput(client.Email)
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
-	page.Timeout(time.Second * 7).WaitStable(time.Second)
+	page.Timeout(time.Second*7).WaitDOMStable(time.Second, 0)
 }
 
 func getPostcodeFromText(s string) (string, error) {
