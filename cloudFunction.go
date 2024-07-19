@@ -25,6 +25,6 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 	case 21:
 		PickMyPostcode()
 	default:
-		sendEmail("Error in cloud function execution", "Could not select the correct function. Time: "+time.Now().In(loc).String(), nil)
+		sendEmail("andrew_field+luckdiperror@hotmail.co.uk", "Error in cloud function execution", "Could not select the correct function. Time: "+time.Now().In(loc).String(), nil)
 	}
 }

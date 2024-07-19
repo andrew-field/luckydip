@@ -43,13 +43,15 @@ func FreeBirthdateLottery() {
 		winningTicket = freeBirthdateLotteryGetWinningTicket(page, people[time.Now().Day()%len(people)])
 	})
 
+	to := "andrew_field+freebirthdatelottery@hotmail.co.uk"
+
 	if err != nil {
 		summary := "Unknown error"
 		if errors.Is(err, context.DeadlineExceeded) {
 			summary = "Timeout error"
 		}
 
-		sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return
 	}
@@ -75,7 +77,7 @@ func FreeBirthdateLottery() {
 	body := fmt.Sprintf(freeBirthdateLotteryFormatResults(people) + "\n\n" + "Ticket: " + winningTicket)
 
 	// Send email.
-	sendEmail(summary, body, nil)
+	sendEmail(to, summary, body, nil)
 }
 
 func freeBirthdateLotteryGetWinningTicket(page *rod.Page, client freeBirthdateLotteryPerson) string {

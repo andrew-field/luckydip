@@ -46,13 +46,15 @@ func WinADinner() {
 		winADinnerLogin(page, people[time.Now().Day()%len(people)])
 	})
 
+	to := "andrew_field+winadinner@hotmail.co.uk"
+
 	if err != nil {
 		summary := "Unknown error"
 		if errors.Is(err, context.DeadlineExceeded) {
 			summary = "Timeout error"
 		}
 
-		sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return
 	}
@@ -78,7 +80,7 @@ func WinADinner() {
 	body := fmt.Sprintf(winADinnerFormatResults(people)+"\n\nTickets: %v", winningTickets)
 
 	// Send email.
-	sendEmail(summary, body, nil)
+	sendEmail(to, summary, body, nil)
 }
 
 func winADinnerGetWinningTickets(page *rod.Page) []string {
@@ -106,7 +108,7 @@ func winADinnerLogin(page *rod.Page, clientToday winADinnerPerson) { // Already 
 func winADinnerFormatResults(people []winADinnerPerson) string {
 	output := "Matches        Main      Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-13t%v\n", p.Name, p.Match, p.Entry)
+		output += fmt.Sprintf("%-15s%-12t%v\n", p.Name, p.Match, p.Entry)
 	}
 	return output
 }

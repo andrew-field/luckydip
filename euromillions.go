@@ -68,6 +68,8 @@ func Euromillions() {
 		}
 	})
 
+	to := "andrew_field+euromillions@hotmail.co.uk"
+
 	// Check for error.
 	if err != nil {
 		summary := "Unknown error"
@@ -75,7 +77,7 @@ func Euromillions() {
 			summary = "Timeout error"
 		}
 
-		sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return
 	}
@@ -105,7 +107,7 @@ func Euromillions() {
 	body := fmt.Sprintf(euromillionsFormatResults(people) + "\n\n" + euromillionsFormatTickets(winningTickets))
 
 	// Send email.
-	sendEmail(summary, body, nil)
+	sendEmail(to, summary, body, nil)
 }
 
 func euromillionsGetWinningTickets(page *rod.Page) euromillionsTickets {

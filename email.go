@@ -7,13 +7,11 @@ import (
 	"os"
 )
 
-func sendEmail(subject, body string, pic []byte) {
+func sendEmail(to, subject, body string, pic []byte) {
 	from := "andrewpcfield@gmail.com"
 
 	// Set up authentication information.
 	auth := smtp.PlainAuth("", from, os.Getenv("GOOGLEAPPPASSWORD"), "smtp.gmail.com")
-
-	to := "andrew_field+euromillions@hotmail.co.uk"
 
 	// Message
 	msg := bytes.NewBuffer(nil)

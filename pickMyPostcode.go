@@ -71,13 +71,15 @@ func PickMyPostcode() {
 		}
 	})
 
+	to := "andrew_field+pickmypostcode@hotmail.co.uk"
+
 	if err != nil {
 		summary := "Unknown error"
 		if errors.Is(err, context.DeadlineExceeded) {
 			summary = "Timeout error"
 		}
 
-		sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return
 	}
@@ -133,7 +135,7 @@ func PickMyPostcode() {
 	body := fmt.Sprintf(results + "\n\n" + postcodes)
 
 	// Send email.
-	sendEmail(summary, body, nil)
+	sendEmail(to, summary, body, nil)
 }
 
 func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pickMyPostcodePerson) pickMyPostcodeTickets {
@@ -299,7 +301,7 @@ func formatResultsMainDraw(people []pickMyPostcodePerson) string {
 func formatResultsStackpot(people []pickMyPostcodePerson) string {
 	output := "Matches        Stackpot       Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-15t%v\n", p.Name, p.MatchStackpot, p.Entry)
+		output += fmt.Sprintf("%-15s%-18t%v\n", p.Name, p.MatchStackpot, p.Entry)
 	}
 	return output
 }

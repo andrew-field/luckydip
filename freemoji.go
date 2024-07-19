@@ -55,13 +55,15 @@ func Freemoji() {
 		getMainWinningTicket(page, &winningTickets, people[time.Now().Day()%len(people)])
 	})
 
+	to := "andrew_field+freemoji@hotmail.co.uk"
+
 	if err != nil {
 		summary := "Unknown error"
 		if errors.Is(err, context.DeadlineExceeded) {
 			summary = "Timeout error"
 		}
 
-		sendEmail(summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return
 	}
@@ -92,7 +94,7 @@ func Freemoji() {
 	body := fmt.Sprintf(freemojiFormatResults(people) + "\n\n" + freemojiFormatTickets(winningTickets))
 
 	// Send email.
-	sendEmail(summary, body, nil)
+	sendEmail(to, summary, body, nil)
 }
 
 func getFiverWinningTickets(page *rod.Page, ticketsToday *freemojiTickets) {
