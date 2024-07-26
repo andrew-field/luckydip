@@ -161,7 +161,7 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 		winningTickets.Stackpot = make([]string, len(stackpotPostcodes))
 		for i, el := range stackpotPostcodes {
 			if winningTickets.Stackpot[i], err = getPostcodeFromText(el.MustText()); err != nil {
-				panic(errors.Join(err, errors.New("error while fetching the stackpot postcodes")))
+				panic("error while fetching the stackpot postcodes" + err.Error())
 			}
 		}
 
@@ -171,14 +171,14 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	// Main draw
 	el := page.MustElement("#main-draw-header > div > div > p.result--postcode")
 	if winningTickets.Main, err = getPostcodeFromText(el.MustText()); err != nil {
-		panic(errors.Join(err, errors.New("error while fetching the main postcode")))
+		panic("error while fetching the main postcode" + err.Error())
 	}
 
 	// Video
 	page.MustNavigate("https://pickmypostcode.com/video/")
 	el = page.MustElement("#result-header > div > p.result--postcode")
 	if winningTickets.Video, err = getPostcodeFromText(el.MustText()); err != nil {
-		panic(errors.Join(err, errors.New("error while fetching the video postcode")))
+		panic("error while fetching the video postcode" + err.Error())
 	}
 
 	// Survey draw
@@ -188,7 +188,7 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	button.MustClick()
 	el = page.MustElement("#result-header > div > p.result--postcode")
 	if winningTickets.Survey, err = getPostcodeFromText(el.MustText()); err != nil {
-		panic(errors.Join(err, errors.New("error while fetching the survey postcode")))
+		panic("error while fetching the survey postcode" + err.Error())
 	}
 
 	// Bonus
@@ -198,17 +198,17 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	winningTickets.Bonus = make([]string, 3)
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
 	if winningTickets.Bonus[0], err = getPostcodeFromText(el.MustText()); err != nil {
-		panic(errors.Join(err, errors.New("error while fetching the bonus 5 postcode")))
+		panic("error while fetching the bonus 5 postcode" + err.Error())
 	}
 
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-ten > div > div.result--header > p")
 	if winningTickets.Bonus[1], err = getPostcodeFromText(el.MustText()); err != nil {
-		panic(errors.Join(err, errors.New("error while fetching the bonus 10 postcode")))
+		panic("error while fetching the bonus 10 postcode" + err.Error())
 	}
 
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-twenty > div > div.result--header > p")
 	if winningTickets.Bonus[2], err = getPostcodeFromText(el.MustText()); err != nil {
-		panic(errors.Join(err, errors.New("error while fetching the bonus 20 postcode")))
+		panic("error while fetching the bonus 20 postcode" + err.Error())
 	}
 
 	// Minidraw
@@ -216,7 +216,7 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	time.Sleep(9 * time.Second)
 	el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
 	if winningTickets.Minidraw, err = getPostcodeFromText(el.MustText()); err != nil {
-		panic(errors.Join(err, errors.New("error while fetching the minidraw postcode")))
+		panic("error while fetching the minidraw postcode" + err.Error())
 	}
 
 	// While here, to save time later, populate the bonus money for the first client here.
@@ -286,7 +286,7 @@ func loginAndGetBonus(page *rod.Page, client *pickMyPostcodePerson) {
 
 func populateTotalBonusMoneyForClient(page *rod.Page, client *pickMyPostcodePerson) {
 	if client.BonusMoney = page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success").MustText(); len(client.BonusMoney) > 10 {
-		panic(errors.New("error while fetching the bonus money for " + client.Name + " Bonus text: " + client.BonusMoney))
+		panic("error while fetching the bonus money for " + client.Name + " Bonus text: " + client.BonusMoney)
 	}
 }
 
