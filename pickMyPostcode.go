@@ -285,8 +285,12 @@ func loginAndGetBonus(page *rod.Page, client *pickMyPostcodePerson) {
 }
 
 func populateTotalBonusMoneyForClient(page *rod.Page, client *pickMyPostcodePerson) {
-	if client.BonusMoney = page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success").MustText(); len(client.BonusMoney) > 10 {
-		panic("error while fetching the bonus money for " + client.Name + " Bonus text: " + client.BonusMoney)
+	bonusElement := page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success")
+	if client.BonusMoney = bonusElement.MustText(); len(client.BonusMoney) > 10 {
+		time.Sleep(time.Second * 5)
+		if client.BonusMoney = bonusElement.MustText(); len(client.BonusMoney) > 10 {
+			panic("error while fetching the bonus money for " + client.Name + " Bonus text: " + client.BonusMoney)
+		}
 	}
 }
 
