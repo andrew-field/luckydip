@@ -8,10 +8,60 @@ on:
   workflow_dispatch:
 
 jobs:
-
   deploy:
-    name: Deploy Cloud function
-    uses: andrew-field/reusable-workflows/.github/workflows/deploy-cloud-function.yml@master
-    with:
-      function_name: luckydip
-    secrets: inherit
+    name: Deploy cloud function
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ secrets.WIP }}
+          service_account: ${{ secrets.SA }}
+          project_id: pickmypostcode3
+
+      # Setup gcloud
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      # Delete old artifacts
+      - name: Delete old artifacts
+        run: gcloud artifacts docker images delete us-west1-docker.pkg.dev/pickmypostcode3/gcf-artifacts/pickmypostcode3__us--west1__luckydip
+
+      - name: Deploy
+        uses: google-github-actions/deploy-cloud-functions@v3
+        timeout-minutes: 10
+        with:
+          name: luckdip
+          region: us-west1
+          runtime: go122
+          entry_point: HelloHTTP
+          memory: 4Gi
+          environment_variables: GOOGLEAPPPASSWORD=${{ secrets.GAP }}
+          max_instance_count: 1
+          service_timeout: 200s
+          # Not sure how to set trigger to http. event_trigger_type: http changes the trigger to an event type(?). At the moment, the trigger does not change from the current http.
+# New deployments are automatically private services, while deploying a revision of a public (unauthenticated) service will preserve the IAM setting of public (unauthenticated).
+# The function has been set to allow unauthenticated so it will continue to be unauthenticated. i.e. don't delete the function or set the function to allow unauthenticated after a new fresh deploy.
+
+
+# OLD METHOD USING GCLOUD DIRECTLY
+# This was setup using: https://github.com/google-github-actions/auth#setup
+# This might also be useful: https://www.youtube.com/watch?v=ZgVhU5qvK1M
+
+#      - name: Set up Cloud SDK
+#        uses: 'google-github-actions/setup-gcloud@v2'
+#        with:
+#          version: '>= 363.0.0'
+
+#      - name: Deploy
+#        run: 'gcloud functions deploy ${{ inputs.function_name }} --runtime=go122 --region=us-west1 --trigger-http --allow-unauthenticated --entry-point=HelloHTTP --memory=2Gi --timeout=300s --set-env-vars=GOOGLEAPPPASSWORD=${{ secrets.GAP }} --max-instances=1'
+
+      # Delete artifact cache. The cloud function does not seem to need the cache to run, this takes up space, and the artifact registry might have too much in.
+      - name: Delete old artifact cache
+        run: gcloud artifacts docker images delete us-west1-docker.pkg.dev/pickmypostcode3/gcf-artifacts/pickmypostcode3__us--west1__luckydip/cache
