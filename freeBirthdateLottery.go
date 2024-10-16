@@ -46,9 +46,9 @@ func FreeBirthdateLottery() {
 	to := "andrew_field+freebirthdatelottery@hotmail.co.uk"
 
 	if err != nil {
-		summary := "Unknown error"
+		summary := UnknownError
 		if errors.Is(err, context.DeadlineExceeded) {
-			summary = "Timeout error"
+			summary = TimeoutError
 		}
 
 		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
@@ -74,7 +74,7 @@ func FreeBirthdateLottery() {
 	}
 
 	// Generate message.
-	body := fmt.Sprintf(freeBirthdateLotteryFormatResults(people) + "\n\n" + "Ticket: " + winningTicket)
+	body := fmt.Sprintf("%s\n\n%s %s", freeBirthdateLotteryFormatResults(people), "Ticket:", winningTicket)
 
 	// Send email.
 	sendEmail(to, summary, body, nil)

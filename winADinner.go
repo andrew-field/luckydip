@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"slices"
 	"time"
 
@@ -49,9 +50,9 @@ func WinADinner() {
 	to := "andrew_field+winadinner@hotmail.co.uk"
 
 	if err != nil {
-		summary := "Unknown error"
+		summary := UnknownError
 		if errors.Is(err, context.DeadlineExceeded) {
-			summary = "Timeout error"
+			summary = TimeoutError
 		}
 
 		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
@@ -102,7 +103,10 @@ func winADinnerLogin(page *rod.Page, clientToday winADinnerPerson) { // Already 
 	page.MustElement("#user_name").MustInput(clientToday.Email)
 	page.MustElement("#password").MustInput(clientToday.Password)
 	page.MustElement("#sign-in-submit").MustClick()
-	page.Timeout(time.Second*5).WaitDOMStable(time.Second, 0) // Can't be bothered to log out after this. WaitDOMStable/Stable don't seem to work without a timeout.
+	err := page.Timeout(time.Second*5).WaitDOMStable(time.Second, 0) // Can't be bothered to log out after this. WaitDOMStable/Stable don't seem to work without a timeout.
+	if err != nil {
+		log.Println("Failed to wait for page dom stable after win a dinner login. Error:", err.Error())
+	}
 }
 
 func winADinnerFormatResults(people []winADinnerPerson) string {

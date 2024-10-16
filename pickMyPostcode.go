@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"slices"
 	"strings"
 	"time"
@@ -54,12 +55,15 @@ func PickMyPostcode() {
 	// An effort to avoid bot detection.
 	page := stealth.MustPage(browser)
 
-	loc, _ := time.LoadLocation("Europe/London")
+	loc, err := time.LoadLocation("Europe/London")
+	if err != nil {
+		panic("Could not load time in the location. Pick my postcode entry. Error: " + err.Error())
+	}
 	isMainDraw := time.Now().In(loc).Hour() == 18
 
 	var winningTickets pickMyPostcodeTickets
 
-	err := rod.Try(func() {
+	err = rod.Try(func() {
 		// Populate today's winning postcodes. Also gets the bonus money for the first client while there.
 		winningTickets = pickMyPostcodeGetWinningTickets(page, isMainDraw, &people[0])
 
@@ -74,9 +78,9 @@ func PickMyPostcode() {
 	to := "andrew_field+pickmypostcode@hotmail.co.uk"
 
 	if err != nil {
-		summary := "Unknown error"
+		summary := UnknownError
 		if errors.Is(err, context.DeadlineExceeded) {
-			summary = "Timeout error"
+			summary = TimeoutError
 		}
 
 		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
@@ -184,7 +188,10 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	// Survey draw
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/")
 	button := page.MustElement("#result-survey > div:nth-child(1) > div > div > div.survey-buttons > button.btn.btn-secondary").MustScrollIntoView()
-	page.Timeout(5 * time.Second).MustElement("#v-aside-rt").Remove() // Sometimes this content thing blocks the button
+	err = page.Timeout(5 * time.Second).MustElement("#v-aside-rt").Remove() // Sometimes this content thing blocks the button.
+	if err != nil {
+		log.Println("Failed to remove content at pick my postcode survey draw. Error:", err.Error())
+	}
 	button.MustClick()
 	el = page.MustElement("#result-header > div > p.result--postcode")
 	if winningTickets.Survey, err = getPostcodeFromText(el.MustText()); err != nil {
@@ -194,7 +201,7 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	// Bonus
 	page.MustNavigate("https://pickmypostcode.com/your-bonus/")
 	page.MustWaitDOMStable()
-	page.MustWaitElementsMoreThan("p.result--postcode", 2) // 3 fails for some reason
+	page.MustWaitElementsMoreThan("p.result--postcode", 2) // 3 fails for some reason.
 	winningTickets.Bonus = make([]string, 3)
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-five > div > div.result--header > p")
 	if winningTickets.Bonus[0], err = getPostcodeFromText(el.MustText()); err != nil {
@@ -233,7 +240,10 @@ func login(page *rod.Page, client *pickMyPostcodePerson) {
 	page.MustElement("#confirm-ticket").MustInput(client.Entry)
 	page.MustElement("#confirm-email").MustInput(client.Email)
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
-	page.Timeout(time.Second*7).WaitDOMStable(time.Second, 0)
+	err := page.Timeout(time.Second*7).WaitDOMStable(time.Second, 0)
+	if err != nil {
+		log.Println("Failed to wait for page dom stable after pick my postcode login. Error:", err.Error())
+	}
 }
 
 func getPostcodeFromText(s string) (string, error) {

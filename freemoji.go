@@ -58,9 +58,9 @@ func Freemoji() {
 	to := "andrew_field+freemoji@hotmail.co.uk"
 
 	if err != nil {
-		summary := "Unknown error"
+		summary := UnknownError
 		if errors.Is(err, context.DeadlineExceeded) {
-			summary = "Timeout error"
+			summary = TimeoutError
 		}
 
 		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
@@ -91,7 +91,7 @@ func Freemoji() {
 	}
 
 	// Generate message.
-	body := fmt.Sprintf(freemojiFormatResults(people) + "\n\n" + freemojiFormatTickets(winningTickets))
+	body := fmt.Sprintf("%s\n\n%s", freemojiFormatResults(people), freemojiFormatTickets(winningTickets))
 
 	// Send email.
 	sendEmail(to, summary, body, nil)
@@ -105,7 +105,7 @@ func getFiverWinningTickets(page *rod.Page, ticketsToday *freemojiTickets) {
 	for i := 0; i < 5; i++ {
 		ticketsToday.Fivers[i] = ""
 		for j := 0; j < 5; j++ {
-			ticketsToday.Fivers[i] = ticketsToday.Fivers[i] + page.MustElement(fmt.Sprintf(selectorString, i+1, j+1)).MustProperty("standby").String()
+			ticketsToday.Fivers[i] += page.MustElement(fmt.Sprintf(selectorString, i+1, j+1)).MustProperty("standby").String()
 		}
 	}
 }
@@ -128,7 +128,7 @@ func getMainWinningTicket(page *rod.Page, ticketsToday *freemojiTickets, client 
 	// Get main ticket
 	selectorString := "body > div.main-container > div:nth-child(4) > div > div.section-intro > div > div > div.col-xs-12.col-sm-10.col-sm-push-1.col-md-8.col-md-push-2.col-lg-6.col-lg-push-3.signup > div > div > div > div.freemoji-display-name.clearfix > div:nth-child(%d) > div > object"
 	for i := 1; i < 6; i++ {
-		ticketsToday.Main = ticketsToday.Main + page.MustElement(fmt.Sprintf(selectorString, i)).MustProperty("standby").String()
+		ticketsToday.Main += page.MustElement(fmt.Sprintf(selectorString, i)).MustProperty("standby").String()
 	}
 }
 

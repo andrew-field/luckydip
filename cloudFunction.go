@@ -5,9 +5,15 @@ import (
 	"time"
 )
 
+const UnknownError = "Unknown error"
+const TimeoutError = "Timeout error"
+
 // HelloHTTP is an HTTP Cloud Function with a request parameter.
-func HelloHTTP(w http.ResponseWriter, r *http.Request) {
-	loc, _ := time.LoadLocation("Europe/London")
+func HelloHTTP(_ http.ResponseWriter, r *http.Request) {
+	loc, err := time.LoadLocation("Europe/London")
+	if err != nil {
+		panic("Could not load time in the location. HelloHTTP Entry. Error: " + err.Error())
+	}
 
 	switch time.Now().In(loc).Hour() {
 	case 8:
