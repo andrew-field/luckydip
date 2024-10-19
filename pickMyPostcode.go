@@ -136,7 +136,7 @@ func PickMyPostcode() {
 		results = formatResultsStackpot(people)
 		postcodes = formatPostcodesStackpot(winningTickets)
 	}
-	body := fmt.Sprintf(results + "\n\n" + postcodes)
+	body := fmt.Sprintf("%s\n\n%s", results, postcodes)
 
 	// Send email.
 	sendEmail(to, summary, body, nil)
