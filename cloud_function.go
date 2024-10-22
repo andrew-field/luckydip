@@ -11,6 +11,8 @@ import (
 
 const UnknownError = "Unknown error"
 const TimeoutError = "Timeout error"
+const WinOutcome = "WIN!"
+const LoseOutcome = "Lose"
 
 // HelloHTTP is an HTTP Cloud Function with a request parameter.
 func HelloHTTP(_ http.ResponseWriter, _ *http.Request) {

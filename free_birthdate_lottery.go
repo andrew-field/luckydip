@@ -58,9 +58,9 @@ func FreeBirthdateLottery() {
 	}
 
 	// Get overall WIN/LOSE.
-	outcome := "Lose"
+	outcome := LoseOutcome
 	if result {
-		outcome = "WIN!"
+		outcome = WinOutcome
 	}
 	summary := outcome + " - Free birthday lottery summary."
 

@@ -89,9 +89,9 @@ func Euromillions() {
 	}
 
 	// Get overall WIN/LOSE.
-	outcome := "Lose"
+	outcome := LoseOutcome
 	if result {
-		outcome = "WIN!"
+		outcome = WinOutcome
 	}
 	summary := outcome + " - Euromillions summary."
 

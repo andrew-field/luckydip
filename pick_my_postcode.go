@@ -114,9 +114,9 @@ func PickMyPostcode() {
 		summaryType = "Main draw"
 	}
 
-	outcome := "Lose"
+	outcome := LoseOutcome
 	if result {
-		outcome = "WIN!"
+		outcome = WinOutcome
 	}
 	summary := fmt.Sprintf("%s - %s - Pick my postcode summary.", outcome, summaryType)
 
