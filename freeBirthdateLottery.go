@@ -1,8 +1,6 @@
 package luckydip
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -40,19 +38,13 @@ func FreeBirthdateLottery() {
 
 	err := rod.Try(func() {
 		// Cycle through the people so each person gets a login. Otherwise, their entry may be disabled if they have not logged in for a while.
-		winningTicket = freeBirthdateLotteryGetWinningTicket(page, people[time.Now().Day()%len(people)])
+		winningTicket = freeBirthdateLotteryLoginAndGetWinningTicket(page, people[time.Now().Day()%len(people)])
 	})
 
 	to := "andrew_field+freebirthdatelottery@hotmail.co.uk"
 
-	if err != nil {
-		summary := UnknownError
-		if errors.Is(err, context.DeadlineExceeded) {
-			summary = TimeoutError
-		}
-
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
-
+	// If err is not nil, exit function.
+	if checkProcessError(err, to, page) {
 		return
 	}
 
@@ -66,12 +58,11 @@ func FreeBirthdateLottery() {
 	}
 
 	// Get overall WIN/LOSE.
-	summary := " - Free birthday lottery summary."
+	outcome := "Lose"
 	if result {
-		summary = "WIN!" + summary
-	} else {
-		summary = "Lose" + summary
+		outcome = "WIN!"
 	}
+	summary := outcome + " - Free birthday lottery summary."
 
 	// Generate message.
 	body := fmt.Sprintf("%s\n\n%s %s", freeBirthdateLotteryFormatResults(people), "Ticket:", winningTicket)
@@ -80,7 +71,7 @@ func FreeBirthdateLottery() {
 	sendEmail(to, summary, body, nil)
 }
 
-func freeBirthdateLotteryGetWinningTicket(page *rod.Page, client freeBirthdateLotteryPerson) string {
+func freeBirthdateLotteryLoginAndGetWinningTicket(page *rod.Page, client freeBirthdateLotteryPerson) string {
 	page.MustNavigate("https://www.freebirthdatelottery.com/login/")
 
 	// Login

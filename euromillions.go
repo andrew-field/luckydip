@@ -1,8 +1,6 @@
 package luckydip
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"log"
 	"slices"
@@ -61,6 +59,7 @@ func Euromillions() {
 			page.MustElement("body > div.fc-consent-root > div.fc-dialog-container > div.fc-dialog.fc-data-preferences-dialog > div.fc-footer-buttons-container > div.fc-footer-buttons > button.fc-button.fc-confirm-choices.fc-primary-button").MustClick()
 		}
 
+		// Get today's winning tickets.
 		winningTickets = euromillionsGetWinningTickets(page)
 
 		// Login for each client and enter draw.
@@ -71,15 +70,8 @@ func Euromillions() {
 
 	to := "andrew_field+euromillions@hotmail.co.uk"
 
-	// Check for error.
-	if err != nil {
-		summary := UnknownError
-		if errors.Is(err, context.DeadlineExceeded) {
-			summary = TimeoutError
-		}
-
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
-
+	// If err is not nil, exit function.
+	if checkProcessError(err, to, page) {
 		return
 	}
 
@@ -97,12 +89,11 @@ func Euromillions() {
 	}
 
 	// Get overall WIN/LOSE.
-	summary := " - Euromillions summary."
+	outcome := "Lose"
 	if result {
-		summary = "WIN!" + summary
-	} else {
-		summary = "Lose" + summary
+		outcome = "WIN!"
 	}
+	summary := outcome + " - Euromillions summary."
 
 	// Generate message.
 	body := fmt.Sprintf("%s\n\n%s", euromillionsFormatResults(people), euromillionsFormatTickets(winningTickets))
@@ -116,6 +107,7 @@ func euromillionsGetWinningTickets(page *rod.Page) euromillionsTickets {
 
 	selectorString := "#resultsTable > tbody > tr:nth-child(2) > td:nth-child(3) > ul > li:nth-child(%d)"
 
+	// Get the daily winning ticket.
 	winningTickets := euromillionsTickets{Daily: make([]string, 6)}
 	for i := 0; i < 6; i++ {
 		winningTickets.Daily[i] += page.MustElement(fmt.Sprintf(selectorString, i+1)).MustText()

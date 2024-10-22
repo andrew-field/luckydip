@@ -1,8 +1,6 @@
 package luckydip
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"log"
 	"slices"
@@ -41,6 +39,7 @@ func WinADinner() {
 	var winningTickets []string
 
 	err := rod.Try(func() {
+		// Get the winning tickets.
 		winningTickets = winADinnerGetWinningTickets(page)
 
 		// Cycle through the people so each person gets a login. Otherwise, their entry may be disabled if they have not logged in for a while.
@@ -49,14 +48,8 @@ func WinADinner() {
 
 	to := "andrew_field+winadinner@hotmail.co.uk"
 
-	if err != nil {
-		summary := UnknownError
-		if errors.Is(err, context.DeadlineExceeded) {
-			summary = TimeoutError
-		}
-
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
-
+	// If err is not nil, exit function.
+	if checkProcessError(err, to, page) {
 		return
 	}
 
@@ -70,12 +63,11 @@ func WinADinner() {
 	}
 
 	// Get overall WIN/LOSE.
-	summary := " - Get a dinner summary."
+	outcome := "Lose"
 	if result {
-		summary = "WIN!" + summary
-	} else {
-		summary = "Lose" + summary
+		outcome = "WIN!"
 	}
+	summary := outcome + " - Get a dinner summary."
 
 	// Generate message.
 	body := fmt.Sprintf(winADinnerFormatResults(people)+"\n\nTickets: %v", winningTickets)

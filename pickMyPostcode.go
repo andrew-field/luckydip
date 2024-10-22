@@ -1,7 +1,6 @@
 package luckydip
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -55,10 +54,13 @@ func PickMyPostcode() {
 	// An effort to avoid bot detection.
 	page := stealth.MustPage(browser)
 
+	// Load the London timezone.
 	loc, err := time.LoadLocation("Europe/London")
 	if err != nil {
 		panic("Could not load time in the location. Pick my postcode entry. Error: " + err.Error())
 	}
+
+	// Is the time of execution suitable to check the main draw or the stack pot draw.
 	isMainDraw := time.Now().In(loc).Hour() == 18
 
 	var winningTickets pickMyPostcodeTickets
@@ -77,14 +79,8 @@ func PickMyPostcode() {
 
 	to := "andrew_field+pickmypostcode@hotmail.co.uk"
 
-	if err != nil {
-		summary := UnknownError
-		if errors.Is(err, context.DeadlineExceeded) {
-			summary = TimeoutError
-		}
-
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
-
+	// If err is not nil, exit function.
+	if checkProcessError(err, to, page) {
 		return
 	}
 
@@ -113,18 +109,16 @@ func PickMyPostcode() {
 		}
 	}
 
-	// Get overall WIN/LOSE.
-	summary := " - Pick my postcode summary."
+	summaryType := "Stackpot"
 	if isMainDraw {
-		summary = " - Main draw" + summary
-	} else {
-		summary = " - Stackpot" + summary
+		summaryType = "Main draw"
 	}
+
+	outcome := "Lose"
 	if result {
-		summary = "WIN!" + summary
-	} else {
-		summary = "Lose" + summary
+		outcome = "WIN!"
 	}
+	summary := fmt.Sprintf("%s - %s - Pick my postcode summary.", outcome, summaryType)
 
 	// Generate message content.
 	var results string
@@ -145,7 +139,7 @@ func PickMyPostcode() {
 func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pickMyPostcodePerson) pickMyPostcodeTickets {
 	page.MustNavigate("https://pickmypostcode.com")
 
-	// Login
+	// Login.
 	login(page, client)
 
 	// Deny all cookies etc. Sometimes the cloud function does not show this box, so times out.
@@ -157,7 +151,7 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	winningTickets := pickMyPostcodeTickets{}
 
 	if !isMainDraw {
-		// Stackpot
+		// If not the main draw then it is the stack pot draw.
 		page.MustNavigate("https://pickmypostcode.com/stackpot/")
 		page.MustWaitDOMStable()
 		page.MustWaitElementsMoreThan("p.result--postcode", 2)
@@ -172,20 +166,20 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 		return winningTickets
 	}
 
-	// Main draw
+	// Main draw.
 	el := page.MustElement("#main-draw-header > div > div > p.result--postcode")
 	if winningTickets.Main, err = getPostcodeFromText(el.MustText()); err != nil {
 		panic("error while fetching the main postcode" + err.Error())
 	}
 
-	// Video
+	// Video.
 	page.MustNavigate("https://pickmypostcode.com/video/")
 	el = page.MustElement("#result-header > div > p.result--postcode")
 	if winningTickets.Video, err = getPostcodeFromText(el.MustText()); err != nil {
 		panic("error while fetching the video postcode" + err.Error())
 	}
 
-	// Survey draw
+	// Survey draw.
 	page.MustNavigate("https://pickmypostcode.com/survey-draw/")
 	button := page.MustElement("#result-survey > div:nth-child(1) > div > div > div.survey-buttons > button.btn.btn-secondary").MustScrollIntoView()
 	err = page.Timeout(5 * time.Second).MustElement("#v-aside-rt").Remove() // Sometimes this content thing blocks the button.
@@ -198,7 +192,7 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 		panic("error while fetching the survey postcode" + err.Error())
 	}
 
-	// Bonus
+	// Bonus 5.
 	page.MustNavigate("https://pickmypostcode.com/your-bonus/")
 	page.MustWaitDOMStable()
 	page.MustWaitElementsMoreThan("p.result--postcode", 2) // 3 fails for some reason.
@@ -208,17 +202,19 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 		panic("error while fetching the bonus 5 postcode" + err.Error())
 	}
 
+	// Bonus 10.
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-ten > div > div.result--header > p")
 	if winningTickets.Bonus[1], err = getPostcodeFromText(el.MustText()); err != nil {
 		panic("error while fetching the bonus 10 postcode" + err.Error())
 	}
 
+	// Bonus 20.
 	el = page.MustElement("#banner-bonus > div > div.result-bonus.draw.draw-twenty > div > div.result--header > p")
 	if winningTickets.Bonus[2], err = getPostcodeFromText(el.MustText()); err != nil {
 		panic("error while fetching the bonus 20 postcode" + err.Error())
 	}
 
-	// Minidraw
+	// Minidraw.
 	page.MustElement("#fpl-minidraw > section > div > p.postcode").MustScrollIntoView()
 	time.Sleep(9 * time.Second)
 	el = page.MustElement("#fpl-minidraw > section > div > p.postcode")
@@ -296,7 +292,9 @@ func loginAndGetBonus(page *rod.Page, client *pickMyPostcodePerson) {
 
 func populateTotalBonusMoneyForClient(page *rod.Page, client *pickMyPostcodePerson) {
 	bonusElement := page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success")
+	// Sometimes there is a strange error and the return value text is not loaded properly and a long value. Check for this by checking if it is > 10, if so, run it again after some time.
 	if client.BonusMoney = bonusElement.MustText(); len(client.BonusMoney) > 10 {
+		log.Println("Error getting total bonus money for " + client.Name + ". Retrying after 5 seconds...")
 		time.Sleep(time.Second * 5)
 		if client.BonusMoney = bonusElement.MustText(); len(client.BonusMoney) > 10 {
 			panic("error while fetching the bonus money for " + client.Name + " Bonus text: " + client.BonusMoney)

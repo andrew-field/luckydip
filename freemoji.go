@@ -1,8 +1,6 @@
 package luckydip
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -49,22 +47,17 @@ func Freemoji() {
 	winningTickets := freemojiTickets{Main: "", Fivers: make([]string, 5)}
 
 	err := rod.Try(func() {
+		// Get the fiver winning ticket.
 		getFiverWinningTickets(page, &winningTickets)
 
 		// Cycle through the people so each person gets a login. Otherwise, their entry may be disabled if they have not logged in for a while.
-		getMainWinningTicket(page, &winningTickets, people[time.Now().Day()%len(people)])
+		loginAndGetMainWinningTicket(page, &winningTickets, people[time.Now().Day()%len(people)])
 	})
 
 	to := "andrew_field+freemoji@hotmail.co.uk"
 
-	if err != nil {
-		summary := UnknownError
-		if errors.Is(err, context.DeadlineExceeded) {
-			summary = TimeoutError
-		}
-
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
-
+	// If err is not nil, exit function.
+	if checkProcessError(err, to, page) {
 		return
 	}
 
@@ -83,12 +76,11 @@ func Freemoji() {
 	}
 
 	// Get overall WIN/LOSE.
-	summary := " - Freemoji summary."
+	outcome := "Lose"
 	if result {
-		summary = "WIN!" + summary
-	} else {
-		summary = "Lose" + summary
+		outcome = "WIN!"
 	}
+	summary := outcome + " - Freemoji summary."
 
 	// Generate message.
 	body := fmt.Sprintf("%s\n\n%s", freemojiFormatResults(people), freemojiFormatTickets(winningTickets))
@@ -110,7 +102,7 @@ func getFiverWinningTickets(page *rod.Page, ticketsToday *freemojiTickets) {
 	}
 }
 
-func getMainWinningTicket(page *rod.Page, ticketsToday *freemojiTickets, client freemojiPerson) {
+func loginAndGetMainWinningTicket(page *rod.Page, ticketsToday *freemojiTickets, client freemojiPerson) {
 	page.MustNavigate("https://freemojilottery.com/")
 
 	// Login
