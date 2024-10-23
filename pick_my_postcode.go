@@ -85,29 +85,7 @@ func PickMyPostcode() {
 	}
 
 	// Check for a winner.
-	result := false
-	if !isMainDraw {
-		for i := range people {
-			if slices.Contains(winningTickets.Stackpot, people[i].Entry) {
-				people[i].MatchStackpot = true
-				result = true // Don't break early in case of multiple winners.
-			}
-		}
-	} else {
-		for i := range people {
-			people[i].MatchMain = winningTickets.Main == people[i].Entry
-			people[i].MatchVideo = winningTickets.Video == people[i].Entry
-			people[i].MatchSurvey = winningTickets.Survey == people[i].Entry
-			if slices.Contains(winningTickets.Bonus, people[i].Entry) {
-				people[i].MatchBonus = true // Don't break early in case of multiple winners.
-			}
-			people[i].MatchMinidraw = winningTickets.Minidraw == people[i].Entry
-			people[i].MatchAny = people[i].MatchMain || people[i].MatchVideo || people[i].MatchSurvey || people[i].MatchBonus || people[i].MatchMinidraw
-			if people[i].MatchAny {
-				result = true // Don't break early in case of multiple winners.
-			}
-		}
-	}
+	result := checkForWinner(isMainDraw, people, winningTickets)
 
 	summaryType := "Stackpot"
 	if isMainDraw {
@@ -300,6 +278,47 @@ func populateTotalBonusMoneyForClient(page *rod.Page, client *pickMyPostcodePers
 			panic("error while fetching the bonus money for " + client.Name + " Bonus text: " + client.BonusMoney)
 		}
 	}
+}
+
+func checkForWinner(isMainDraw bool, people []pickMyPostcodePerson, winningTickets pickMyPostcodeTickets) bool {
+	result := false
+
+	// Helper function for Main Draw match checking
+	checkMainDraw := func(person *pickMyPostcodePerson) {
+		person.MatchMain = winningTickets.Main == person.Entry
+		person.MatchVideo = winningTickets.Video == person.Entry
+		person.MatchSurvey = winningTickets.Survey == person.Entry
+		person.MatchMinidraw = winningTickets.Minidraw == person.Entry
+		person.MatchBonus = slices.Contains(winningTickets.Bonus, person.Entry)
+
+		// Check if the person matches any draw
+		person.MatchAny = person.MatchMain || person.MatchVideo || person.MatchSurvey || person.MatchBonus || person.MatchMinidraw
+
+		// Update result if any match found
+		if person.MatchAny {
+			result = true
+		}
+	}
+
+	// Helper function for Stackpot match checking
+	checkStackpot := func(person *pickMyPostcodePerson) {
+		if slices.Contains(winningTickets.Stackpot, person.Entry) {
+			person.MatchStackpot = true
+			result = true // Don't break early in case of multiple winners.
+		}
+	}
+
+	if isMainDraw {
+		for i := range people {
+			checkMainDraw(&people[i])
+		}
+	} else {
+		for i := range people {
+			checkStackpot(&people[i])
+		}
+	}
+
+	return result
 }
 
 func formatResultsMainDraw(people []pickMyPostcodePerson) string {
