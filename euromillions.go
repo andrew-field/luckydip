@@ -36,9 +36,7 @@ func Euromillions() {
 	}
 
 	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 200) // -rod="show,trace,slow=1s,monitor=:1234"
-
-	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
+	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 200)
 
 	// An effort to avoid bot detection.
 	page := stealth.MustPage(browser)
@@ -99,7 +97,7 @@ func Euromillions() {
 	body := fmt.Sprintf("%s\n\n%s", euromillionsFormatResults(people), euromillionsFormatTickets(winningTickets))
 
 	// Send email.
-	sendEmail(to, summary, body, nil)
+	SendEmail(to, summary, body, nil)
 }
 
 func euromillionsGetWinningTickets(page *rod.Page) euromillionsTickets {
@@ -169,14 +167,26 @@ func enterDraw(page *rod.Page, client euromillionsPerson) {
 func euromillionsFormatResults(people []euromillionsPerson) string {
 	output := "Matches        Daily    Weekly      Any           Entry\n"
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-10t%-15t%-15t%v\n", p.Name, p.MatchDaily, p.MatchWeekly, p.MatchAny, p.Entry)
+		// Format the output string with proper alignment.
+		output += fmt.Sprintf(
+			"%-15s%-10t%-15t%-15t%v\n", // Format string
+			p.Name,                     // Name
+			p.MatchDaily,               // MatchDaily
+			p.MatchWeekly,              // MatchWeekly
+			p.MatchAny,                 // MatchAny
+			p.Entry,                    // Entry
+		)
 	}
 	return output
 }
 
 func euromillionsFormatTickets(winningTickets euromillionsTickets) string {
 	output := "Tickets          Daily                   Weekly\n"
-	output += fmt.Sprintf("                %v, %v\n", winningTickets.Daily, winningTickets.Weekly)
+	if winningTickets.Weekly != nil {
+		output += fmt.Sprintf("                %v, %v\n", winningTickets.Daily, winningTickets.Weekly)
+	} else {
+		output += fmt.Sprintf("                %v, %s\n", winningTickets.Daily, "No weekly draw")
+	}
 
 	return output
 }

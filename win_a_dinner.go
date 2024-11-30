@@ -2,7 +2,6 @@ package luckydip
 
 import (
 	"fmt"
-	"log"
 	"slices"
 	"time"
 
@@ -29,9 +28,7 @@ func WinADinner() {
 	}
 
 	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 60) // -rod="show,trace,slow=1s,monitor=:1234"
-
-	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
+	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 60)
 
 	// An effort to avoid bot detection.
 	page := stealth.MustPage(browser)
@@ -54,17 +51,17 @@ func WinADinner() {
 	}
 
 	// Check for a winner.
-	result := false
+	isWinner := false
 	for i := range people {
 		if slices.Contains(winningTickets, people[i].Entry) {
 			people[i].Match = true
-			result = true // Don't break early for the slim chance there are multiple winners.
+			isWinner = true // Don't break early for the slim chance there are multiple winners.
 		}
 	}
 
 	// Get overall WIN/LOSE.
 	outcome := LoseOutcome
-	if result {
+	if isWinner {
 		outcome = WinOutcome
 	}
 	summary := outcome + " - Get a dinner summary."
@@ -73,7 +70,7 @@ func WinADinner() {
 	body := fmt.Sprintf(winADinnerFormatResults(people)+"\n\nTickets: %v", winningTickets)
 
 	// Send email.
-	sendEmail(to, summary, body, nil)
+	SendEmail(to, summary, body, nil)
 }
 
 func winADinnerGetWinningTickets(page *rod.Page) []string {
@@ -91,13 +88,17 @@ func winADinnerGetWinningTickets(page *rod.Page) []string {
 }
 
 func winADinnerLogin(page *rod.Page, clientToday winADinnerPerson) { // Already on a good page to login from the getWinningTickets method.
-	page.MustElement("body > header > div > div > ul > li:nth-child(2) > button").MustClick() // For some reason, this selector doesn't work with a '#' sign at the start.
+	// For some reason, this selector doesn't work with a '#' sign at the start.
+	page.MustElement("body > header > div > div > ul > li:nth-child(2) > button").MustClick()
+
 	page.MustElement("#user_name").MustInput(clientToday.Email)
 	page.MustElement("#password").MustInput(clientToday.Password)
-	page.MustElement("#sign-in-submit").MustClick()
-	err := page.Timeout(time.Second*5).WaitDOMStable(time.Second, 0) // Can't be bothered to log out after this. WaitDOMStable/Stable don't seem to work without a timeout.
+
+	// Can't be bothered to log out after this. WaitDOMStable/Stable don't seem to work without a timeout.
+	err := page.Timeout(time.Second*5).WaitDOMStable(time.Second, 0)
+
 	if err != nil {
-		log.Println("Failed to wait for page dom stable after win a dinner login. Error:", err.Error())
+		panic(fmt.Errorf("failed to wait for page dom stable after win a dinner login. Error: %w", err))
 	}
 }
 

@@ -34,12 +34,10 @@ func HelloHTTP(_ http.ResponseWriter, _ *http.Request) {
 		WinADinner()
 	case 18:
 		PickMyPostcode()
-	case 20:
-		Freemoji()
 	case 21:
 		PickMyPostcode()
 	default:
-		sendEmail("andrew_field+luckdiperror@hotmail.co.uk", "Error in cloud function execution", "Could not select the correct function. Time: "+time.Now().In(loc).String(), nil)
+		SendEmail("andrew_field+luckdiperror@hotmail.co.uk", "Error in cloud function execution", "Could not select the correct function. Time: "+time.Now().In(loc).String(), nil)
 	}
 }
 
@@ -51,7 +49,7 @@ func checkProcessError(err error, to string, page *rod.Page) bool {
 		}
 
 		// If err is not nil, send an error email.
-		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		SendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return true
 	}

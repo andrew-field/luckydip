@@ -2,6 +2,7 @@ package luckydip
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-rod/rod"
@@ -27,9 +28,7 @@ func FreeBirthdateLottery() {
 	}
 
 	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 60) // -rod="show,trace,slow=1s,monitor=:1234"
-
-	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
+	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 60)
 
 	// An effort to avoid bot detection.
 	page := stealth.MustPage(browser)
@@ -49,17 +48,17 @@ func FreeBirthdateLottery() {
 	}
 
 	// Check for a winner.
-	result := false
+	isWinner := false
 	for i := range people {
 		if winningTicket == people[i].Entry {
 			people[i].Match = true
-			result = true // Don't break early for the slim chance there are multiple winners.
+			isWinner = true // Don't break early for the slim chance there are multiple winners.
 		}
 	}
 
 	// Get overall WIN/LOSE.
 	outcome := LoseOutcome
-	if result {
+	if isWinner {
 		outcome = WinOutcome
 	}
 	summary := outcome + " - Free birthday lottery summary."
@@ -68,7 +67,7 @@ func FreeBirthdateLottery() {
 	body := fmt.Sprintf("%s\n\n%s %s", freeBirthdateLotteryFormatResults(people), "Ticket:", winningTicket)
 
 	// Send email.
-	sendEmail(to, summary, body, nil)
+	SendEmail(to, summary, body, nil)
 }
 
 func freeBirthdateLotteryLoginAndGetWinningTicket(page *rod.Page, client freeBirthdateLotteryPerson) string {
@@ -88,9 +87,10 @@ func freeBirthdateLotteryLoginAndGetWinningTicket(page *rod.Page, client freeBir
 }
 
 func freeBirthdateLotteryFormatResults(people []freeBirthdateLotteryPerson) string {
-	output := "Matches        Main        Entry\n"
+	var output strings.Builder
+	output.WriteString("Matches        Main        Entry\n")
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-13t%v\n", p.Name, p.Match, p.Entry)
+		output.WriteString(fmt.Sprintf("%-15s%-13t%v\n", p.Name, p.Match, p.Entry))
 	}
-	return output
+	return output.String()
 }

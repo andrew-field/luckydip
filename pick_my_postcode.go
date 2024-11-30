@@ -47,9 +47,7 @@ func PickMyPostcode() {
 	}
 
 	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 180) // -rod="show,trace,slow=1s,monitor=:1234"
-
-	// browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
+	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 180)
 
 	// An effort to avoid bot detection.
 	page := stealth.MustPage(browser)
@@ -102,16 +100,16 @@ func PickMyPostcode() {
 	var results string
 	var postcodes string
 	if isMainDraw {
-		results = formatResultsMainDraw(people)
-		postcodes = formatPostcodesMainDraw(winningTickets)
+		results = formatMainDrawResults(people)
+		postcodes = formatMainDrawPostcodes(winningTickets)
 	} else {
-		results = formatResultsStackpot(people)
-		postcodes = formatPostcodesStackpot(winningTickets)
+		results = formatStackpotResults(people)
+		postcodes = formatStackpotPostcodes(winningTickets)
 	}
 	body := fmt.Sprintf("%s\n\n%s", results, postcodes)
 
 	// Send email.
-	sendEmail(to, summary, body, nil)
+	SendEmail(to, summary, body, nil)
 }
 
 func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pickMyPostcodePerson) pickMyPostcodeTickets {
@@ -204,7 +202,7 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	populateTotalBonusMoneyForClient(page, client)
 
 	// Logout
-	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
+	page.MustElement("#collapseMore > ul > li:nth-child(9) > a").MustClick()
 
 	return winningTickets
 }
@@ -214,32 +212,33 @@ func login(page *rod.Page, client *pickMyPostcodePerson) {
 	page.MustElement("#confirm-ticket").MustInput(client.Entry)
 	page.MustElement("#confirm-email").MustInput(client.Email)
 	page.MustElement("#v-rebrand > div.wrapper.top > div.wrapper--content > main > div.overlay.overlay__open > section > div > div > div > form > button").MustClick()
-	err := page.Timeout(time.Second*7).WaitDOMStable(time.Second, 0)
-	if err != nil {
-		log.Println("Failed to wait for page dom stable after pick my postcode login. Error:", err.Error())
+	if err := page.Timeout(time.Second*7).WaitDOMStable(time.Second, 0); err != nil {
+		panic(fmt.Errorf("failed to wait for page dom stable after pick my postcode login: %w", err))
 	}
 }
 
 func getPostcodeFromText(s string) (string, error) {
-	// Get the first line of the string
+	// Extract the first line of the string to ensure we only process the postcode part.
 	if i := strings.IndexByte(s, '\n'); i >= 0 {
 		s = s[:i]
 	}
 
-	// Remove all white spaces from the string
+	// Remove all spaces to normalize the postcode format.
 	s = strings.ReplaceAll(s, " ", "")
 
-	// Changes to lower case
+	// Converts the postcode to lowercase for uniformity.
 	s = strings.ToLower(s)
 
 	// Checks if the postcode is valid.
 	if !isValidPostcode(s) {
-		return "", errors.New("The postcode: " + s + " , is not valid.")
+		return "", errors.New("the postcode " + s + " is not valid")
 	}
 
+	// Return the cleaned and validated postcode.
 	return s, nil
 }
 
+// A valid postcode must be between 5 to 7 characters long and contain only letters and numbers.
 func isValidPostcode(s string) bool {
 	if len(s) < 5 || len(s) > 7 {
 		return false
@@ -265,7 +264,7 @@ func loginAndGetBonus(page *rod.Page, client *pickMyPostcodePerson) {
 	populateTotalBonusMoneyForClient(page, client)
 
 	// Logout.
-	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
+	page.MustElement("#collapseMore > ul > li:nth-child(9) > a").MustClick()
 }
 
 func populateTotalBonusMoneyForClient(page *rod.Page, client *pickMyPostcodePerson) {
@@ -274,6 +273,7 @@ func populateTotalBonusMoneyForClient(page *rod.Page, client *pickMyPostcodePers
 	if client.BonusMoney = bonusElement.MustText(); len(client.BonusMoney) > 10 {
 		log.Println("Error getting total bonus money for " + client.Name + ". Retrying after 5 seconds...")
 		time.Sleep(time.Second * 5)
+		bonusElement = page.MustElement("#v-main-header > div > div > a > p > span.tag.tag__xs.tag__success")
 		if client.BonusMoney = bonusElement.MustText(); len(client.BonusMoney) > 10 {
 			panic("error while fetching the bonus money for " + client.Name + " Bonus text: " + client.BonusMoney)
 		}
@@ -283,7 +283,7 @@ func populateTotalBonusMoneyForClient(page *rod.Page, client *pickMyPostcodePers
 func checkForWinner(isMainDraw bool, people []pickMyPostcodePerson, winningTickets pickMyPostcodeTickets) bool {
 	result := false
 
-	// Helper function for Main Draw match checking
+	// Helper function for Main Draw match checking.
 	checkMainDraw := func(person *pickMyPostcodePerson) {
 		person.MatchMain = winningTickets.Main == person.Entry
 		person.MatchVideo = winningTickets.Video == person.Entry
@@ -291,16 +291,16 @@ func checkForWinner(isMainDraw bool, people []pickMyPostcodePerson, winningTicke
 		person.MatchMinidraw = winningTickets.Minidraw == person.Entry
 		person.MatchBonus = slices.Contains(winningTickets.Bonus, person.Entry)
 
-		// Check if the person matches any draw
+		// Check if the person matches any draw.
 		person.MatchAny = person.MatchMain || person.MatchVideo || person.MatchSurvey || person.MatchBonus || person.MatchMinidraw
 
-		// Update result if any match found
+		// Update result if any match found.
 		if person.MatchAny {
 			result = true
 		}
 	}
 
-	// Helper function for Stackpot match checking
+	// Helper function for Stackpot match checking.
 	checkStackpot := func(person *pickMyPostcodePerson) {
 		if slices.Contains(winningTickets.Stackpot, person.Entry) {
 			person.MatchStackpot = true
@@ -321,7 +321,7 @@ func checkForWinner(isMainDraw bool, people []pickMyPostcodePerson, winningTicke
 	return result
 }
 
-func formatResultsMainDraw(people []pickMyPostcodePerson) string {
+func formatMainDrawResults(people []pickMyPostcodePerson) string {
 	output := "Matches        Main    Video    Survey    Bonus     Minidraw    Any      Bonus Money       Entry\n"
 	for _, p := range people {
 		output += fmt.Sprintf("%-15s%-10t%-11t%-13t%-12t%-16t%-11t%-23s%v\n", p.Name, p.MatchMain, p.MatchVideo, p.MatchSurvey, p.MatchBonus, p.MatchMinidraw, p.MatchAny, p.BonusMoney, p.Entry)
@@ -329,15 +329,16 @@ func formatResultsMainDraw(people []pickMyPostcodePerson) string {
 	return output
 }
 
-func formatResultsStackpot(people []pickMyPostcodePerson) string {
-	output := "Matches        Stackpot       Entry\n"
+func formatStackpotResults(people []pickMyPostcodePerson) string {
+	var output strings.Builder
+	output.WriteString("Matches        Stackpot       Entry\n")
 	for _, p := range people {
-		output += fmt.Sprintf("%-15s%-18t%v\n", p.Name, p.MatchStackpot, p.Entry)
+		output.WriteString(fmt.Sprintf("%-15s%-18t%v\n", p.Name, p.MatchStackpot, p.Entry))
 	}
-	return output
+	return output.String()
 }
 
-func formatPostcodesMainDraw(winningTickets pickMyPostcodeTickets) string {
+func formatMainDrawPostcodes(winningTickets pickMyPostcodeTickets) string {
 	output := "Postcodes     Main             Video           Survey        Bonus          Minidraw\n"
 	output += fmt.Sprintf("                     %-14s%-14s%-14s%-15s%-14s\n", winningTickets.Main, winningTickets.Video, winningTickets.Survey, winningTickets.Bonus[0], winningTickets.Minidraw)
 	output += fmt.Sprintf("%87s\n", winningTickets.Bonus[1])
@@ -346,11 +347,12 @@ func formatPostcodesMainDraw(winningTickets pickMyPostcodeTickets) string {
 	return output
 }
 
-func formatPostcodesStackpot(winningTickets pickMyPostcodeTickets) string {
-	output := "Postcodes       Stackpot\n"
+func formatStackpotPostcodes(winningTickets pickMyPostcodeTickets) string {
+	var builder strings.Builder
+	builder.WriteString("Postcodes       Stackpot\n")
 	for _, postcode := range winningTickets.Stackpot {
-		output += fmt.Sprintf("%30s\n", postcode)
+		builder.WriteString(fmt.Sprintf("%30s\n", postcode))
 	}
 
-	return output
+	return builder.String()
 }

@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func sendEmail(to, subject, body string, pic []byte) {
+func SendEmail(to, subject, body string, pic []byte) {
 	from := "andrewpcfield@gmail.com"
 
 	// Set up authentication information.
@@ -19,7 +19,7 @@ func sendEmail(to, subject, body string, pic []byte) {
 	msg.WriteString("To: " + to + "\n")
 	msg.WriteString("Subject: " + subject + "\n")
 
-	if pic != nil { // There was an error
+	if pic != nil { // Check if there is an attachment.
 		msg.WriteString("MIME-Version: 1.0\n")
 		msg.WriteString(`Content-Type: multipart/related; boundary="myboundary"` + "\n\n")
 		msg.WriteString("--myboundary\n")
