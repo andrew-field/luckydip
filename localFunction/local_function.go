@@ -6,5 +6,5 @@ import "github.com/andrew-field/luckydip"
 // browser.ServeMonitor("0.0.0.0:1234") // Open a browser and navigate to this address.
 
 func main() {
-	luckydip.PickMyPostcode()
+	luckydip.WinADinner()
 }

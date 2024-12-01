@@ -2,6 +2,7 @@ package luckydip
 
 import (
 	"fmt"
+	"log"
 	"slices"
 	"time"
 
@@ -94,11 +95,13 @@ func winADinnerLogin(page *rod.Page, clientToday winADinnerPerson) { // Already 
 	page.MustElement("#user_name").MustInput(clientToday.Email)
 	page.MustElement("#password").MustInput(clientToday.Password)
 
-	// Can't be bothered to log out after this. WaitDOMStable/Stable don't seem to work without a timeout.
-	err := page.Timeout(time.Second*5).WaitDOMStable(time.Second, 0)
+	page.MustElement("#sign-in-submit").MustClick()
+
+	// Can't be bothered to log out after this. WaitDOMStable/Stable don't seem to work without a timeout. It does log out.
+	err := page.Timeout(time.Second*10).WaitDOMStable(time.Second, 0)
 
 	if err != nil {
-		panic(fmt.Errorf("failed to wait for page dom stable after win a dinner login. Error: %w", err))
+		log.Println(fmt.Errorf("failed to wait for page dom stable after win a dinner login. Error: %w", err))
 	}
 }
 
