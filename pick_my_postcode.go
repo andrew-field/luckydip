@@ -202,7 +202,7 @@ func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pi
 	populateTotalBonusMoneyForClient(page, client)
 
 	// Logout
-	page.MustElement("#collapseMore > ul > li:nth-child(9) > a").MustClick()
+	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
 
 	return winningTickets
 }
@@ -264,7 +264,7 @@ func loginAndGetBonus(page *rod.Page, client *pickMyPostcodePerson) {
 	populateTotalBonusMoneyForClient(page, client)
 
 	// Logout.
-	page.MustElement("#collapseMore > ul > li:nth-child(9) > a").MustClick()
+	page.MustElement("#collapseMore > ul > li:nth-child(10) > a").MustClick()
 }
 
 func populateTotalBonusMoneyForClient(page *rod.Page, client *pickMyPostcodePerson) {
