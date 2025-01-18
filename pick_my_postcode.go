@@ -109,7 +109,7 @@ func PickMyPostcode() {
 	body := fmt.Sprintf("%s\n\n%s", results, postcodes)
 
 	// Send email.
-	SendEmail(to, summary, body, nil)
+	sendEmail(to, summary, body, nil)
 }
 
 func pickMyPostcodeGetWinningTickets(page *rod.Page, isMainDraw bool, client *pickMyPostcodePerson) pickMyPostcodeTickets {

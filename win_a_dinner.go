@@ -71,7 +71,7 @@ func WinADinner() {
 	body := fmt.Sprintf(winADinnerFormatResults(people)+"\n\nTickets: %v", winningTickets)
 
 	// Send email.
-	SendEmail(to, summary, body, nil)
+	sendEmail(to, summary, body, nil)
 }
 
 func winADinnerGetWinningTickets(page *rod.Page) []string {

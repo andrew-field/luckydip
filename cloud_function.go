@@ -37,7 +37,7 @@ func HelloHTTP(_ http.ResponseWriter, _ *http.Request) {
 	case 21:
 		PickMyPostcode()
 	default:
-		SendEmail("andrew_field+luckdiperror@hotmail.co.uk", "Error in cloud function execution", "Could not select the correct function. Time: "+time.Now().In(loc).String(), nil)
+		sendEmail("andrew_field+luckdiperror@hotmail.co.uk", "Error in cloud function execution", "Could not select the correct function. Time: "+time.Now().In(loc).String(), nil)
 	}
 }
 
@@ -49,7 +49,7 @@ func checkProcessError(err error, to string, page *rod.Page) bool {
 		}
 
 		// If err is not nil, send an error email.
-		SendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
+		sendEmail(to, summary, err.Error(), page.CancelTimeout().MustScreenshot())
 
 		return true
 	}

@@ -67,7 +67,7 @@ func FreeBirthdateLottery() {
 	body := fmt.Sprintf("%s\n\n%s %s", freeBirthdateLotteryFormatResults(people), "Ticket:", winningTicket)
 
 	// Send email.
-	SendEmail(to, summary, body, nil)
+	sendEmail(to, summary, body, nil)
 }
 
 func freeBirthdateLotteryLoginAndGetWinningTicket(page *rod.Page, client freeBirthdateLotteryPerson) string {

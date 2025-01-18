@@ -97,7 +97,7 @@ func Euromillions() {
 	body := fmt.Sprintf("%s\n\n%s", euromillionsFormatResults(people), euromillionsFormatTickets(winningTickets))
 
 	// Send email.
-	SendEmail(to, summary, body, nil)
+	sendEmail(to, summary, body, nil)
 }
 
 func euromillionsGetWinningTickets(page *rod.Page) euromillionsTickets {
