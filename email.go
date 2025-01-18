@@ -11,7 +11,11 @@ func SendEmail(to, subject, body string, pic []byte) {
 	from := "andrewpcfield@gmail.com"
 
 	// Set up authentication information.
-	auth := smtp.PlainAuth("", from, os.Getenv("GOOGLEAPPPASSWORD"), "smtp.gmail.com")
+	password := os.Getenv("GOOGLEAPPPASSWORD")
+	if password == "" {
+		panic("GOOGLEAPPPASSWORD environment variable is not set")
+	}
+	auth := smtp.PlainAuth("", from, password, "smtp.gmail.com")
 
 	// Message
 	msg := bytes.NewBuffer(nil)
@@ -19,7 +23,7 @@ func SendEmail(to, subject, body string, pic []byte) {
 	msg.WriteString("To: " + to + "\n")
 	msg.WriteString("Subject: " + subject + "\n")
 
-	if pic != nil { // Check if there is an attachment.
+	if pic != nil { // If there is a picture, i.e. an attachment, it means there was an error.
 		msg.WriteString("MIME-Version: 1.0\n")
 		msg.WriteString(`Content-Type: multipart/related; boundary="myboundary"` + "\n\n")
 		msg.WriteString("--myboundary\n")
