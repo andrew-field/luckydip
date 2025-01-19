@@ -340,7 +340,8 @@ func formatStackpotResults(people []pickMyPostcodePerson) string {
 
 func formatMainDrawPostcodes(winningTickets pickMyPostcodeTickets) string {
 	output := "Postcodes     Main             Video           Survey        Bonus          Minidraw\n"
-	output += fmt.Sprintf("                     %-14s%-14s%-14s%-15s%-14s\n", winningTickets.Main, winningTickets.Video, winningTickets.Survey, winningTickets.Bonus[0], winningTickets.Minidraw)
+	output += fmt.Sprintf("                     %-14s%-14s%-14s%-15s%-14s\n",
+		winningTickets.Main, winningTickets.Video, winningTickets.Survey, winningTickets.Bonus[0], winningTickets.Minidraw)
 	output += fmt.Sprintf("%87s\n", winningTickets.Bonus[1])
 	output += fmt.Sprintf("%87s\n", winningTickets.Bonus[2])
 
