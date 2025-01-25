@@ -23,7 +23,7 @@ func sendEmail(to, subject, body string, pic []byte) {
 
 	// Add the attachment if pic is provided. This means there was an error.
 	if pic != nil {
-		m.AttachReader("Error picture", bytes.NewReader(pic))
+		m.AttachReader("Error picture.jpg", bytes.NewReader(pic))
 	}
 
 	// Set up authentication information.
