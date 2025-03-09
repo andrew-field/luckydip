@@ -4,9 +4,10 @@ on:
   push:
     branches: [master]
 
-  # Allows you to run this workflow manually from the Actions tab
+  # Allows you to run this workflow manually from the Actions tab.
   workflow_dispatch:
 
+# Permissions for the GITHUB_TOKEN.
 permissions: {}
 
 jobs:
@@ -23,15 +24,15 @@ jobs:
       - name: Auth
         uses: "google-github-actions/auth@v2"
         with:
-          workload_identity_provider: ${{ secrets.WIP }}
+          workload_identity_provider: ${{ secrets.WIP }} # Accessed via the secrets context. Needs to be added as a secret.
           service_account: ${{ secrets.SA }}
           project_id: pickmypostcode3
 
-      # Setup gcloud
+      # Setup gcloud.
       - name: Set up Cloud SDK
         uses: "google-github-actions/setup-gcloud@v2"
 
-      # Delete old artifacts
+      # Delete old artifacts.
       - name: Delete old artifacts
         run: gcloud artifacts docker images delete us-west1-docker.pkg.dev/pickmypostcode3/gcf-artifacts/pickmypostcode3__us--west1__luckydip
 
