@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-rod/rod"
-	"github.com/go-rod/stealth"
 )
 
 type winADinnerPerson struct {
@@ -18,7 +17,7 @@ type winADinnerPerson struct {
 	Match    bool
 }
 
-func WinADinner() {
+func WinADinner(page *rod.Page) {
 	// Create all clients.
 	people := []winADinnerPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "@8pMrqr8LXbaEq", Entry: "raddish5"},
@@ -27,12 +26,6 @@ func WinADinner() {
 		{Name: "James            ", Email: "j_field@hotmail.co.uk", Password: "TB3sGkv62MCb4#", Entry: "lemonIsNice"},
 		{Name: "Katherine", Email: "k_avery@outlook.com", Password: "Lsyjf5Lq*EuFh2", Entry: "YumYum8"},
 	}
-
-	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 60)
-
-	// An effort to avoid bot detection.
-	page := stealth.MustPage(browser)
 
 	var winningTickets []string
 

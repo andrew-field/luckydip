@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-rod/rod"
+	"github.com/go-rod/stealth"
 )
 
 const UnknownError = "Unknown error"
@@ -16,6 +17,11 @@ const LoseOutcome = "Lose"
 
 // HelloHTTP is an HTTP Cloud Function with a request parameter.
 func HelloHTTP(_ http.ResponseWriter, _ *http.Request) {
+	// Create browser
+	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 200)
+
+	// An effort to avoid bot detection.
+	page := stealth.MustPage(browser)
 
 	// Load the London time zone.
 	loc, err := time.LoadLocation("Europe/London")
@@ -25,17 +31,17 @@ func HelloHTTP(_ http.ResponseWriter, _ *http.Request) {
 
 	switch time.Now().In(loc).Hour() {
 	case 8:
-		Euromillions()
+		Euromillions(page)
 	case 9:
-		PickMyPostcode()
+		PickMyPostcode(page)
 	case 11:
-		FreeBirthdateLottery()
+		FreeBirthdateLottery(page)
 	case 16:
-		WinADinner()
+		WinADinner(page)
 	case 18:
-		PickMyPostcode()
+		PickMyPostcode(page)
 	case 21:
-		PickMyPostcode()
+		PickMyPostcode(page)
 	default:
 		sendEmail("andrew_field+luckdiperror@hotmail.co.uk", "Error in cloud function execution", "Could not select the correct function. Time: "+time.Now().In(loc).String(), nil)
 	}

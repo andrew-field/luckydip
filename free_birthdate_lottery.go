@@ -6,18 +6,24 @@ import (
 	"time"
 
 	"github.com/go-rod/rod"
-	"github.com/go-rod/stealth"
 )
 
 type freeBirthdateLotteryPerson struct {
-	Name     string
-	Email    string
-	Password string
-	Entry    string
-	Match    bool
+	Name               string
+	Email              string
+	Password           string
+	Entry              string
+	MatchBirthdateDraw bool
+	MatchSurveyDraw    bool
+	MatchAny           bool
 }
 
-func FreeBirthdateLottery() {
+type freeBirthdateLotteryTickets struct {
+	BirthdateDraw string
+	SurveyDraw    string
+}
+
+func FreeBirthdateLottery(page *rod.Page) {
 	// Create all clients.
 	people := []freeBirthdateLotteryPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "$Ha!bUdk#f3c7Y", Entry: "02/07/1994"},
@@ -27,17 +33,11 @@ func FreeBirthdateLottery() {
 		{Name: "Katherine", Email: "k_avery@outlook.com", Password: "FNZXf5ZMpWS$uv", Entry: "09/08/1985"},
 	}
 
-	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 60)
-
-	// An effort to avoid bot detection.
-	page := stealth.MustPage(browser)
-
-	var winningTicket string
+	winningTickets := freeBirthdateLotteryTickets{}
 
 	err := rod.Try(func() {
 		// Cycle through the people so each person gets a login. Otherwise, their entry may be disabled if they have not logged in for a while.
-		winningTicket = freeBirthdateLotteryLoginAndGetWinningTicket(page, people[time.Now().Day()%len(people)])
+		winningTickets = freeBirthdateLotteryLoginAndGetWinningTicket(page, people[time.Now().Day()%len(people)])
 	})
 
 	to := "andrew_field+freebirthdatelottery@hotmail.co.uk"
@@ -48,49 +48,73 @@ func FreeBirthdateLottery() {
 	}
 
 	// Check for a winner.
-	isWinner := false
+	result := false
 	for i := range people {
-		if winningTicket == people[i].Entry {
-			people[i].Match = true
-			isWinner = true // Don't break early for the slim chance there are multiple winners.
+		people[i].MatchBirthdateDraw = winningTickets.BirthdateDraw == people[i].Entry
+		people[i].MatchSurveyDraw = winningTickets.SurveyDraw == people[i].Entry
+		people[i].MatchAny = people[i].MatchBirthdateDraw || people[i].MatchSurveyDraw
+		if people[i].MatchAny {
+			result = true // Don't break early in case of multiple winners.
 		}
 	}
 
 	// Get overall WIN/LOSE.
 	outcome := LoseOutcome
-	if isWinner {
+	if result {
 		outcome = WinOutcome
 	}
-	summary := outcome + " - Free birthday lottery summary."
+	summary := outcome + " - Free birthdate lottery summary."
 
 	// Generate message.
-	body := fmt.Sprintf("%s\n\n%s %s", freeBirthdateLotteryFormatResults(people), "Ticket:", winningTicket)
+	body := fmt.Sprintf("%s\n\n%s", freeBirthdateLotteryFormatResults(people), freeBirthdateLotteryFormatTickets(winningTickets))
 
 	// Send email.
 	sendEmail(to, summary, body, nil)
 }
 
-func freeBirthdateLotteryLoginAndGetWinningTicket(page *rod.Page, client freeBirthdateLotteryPerson) string {
+func freeBirthdateLotteryLoginAndGetWinningTicket(page *rod.Page, client freeBirthdateLotteryPerson) freeBirthdateLotteryTickets {
+	winningTickets := freeBirthdateLotteryTickets{}
+
 	page.MustNavigate("https://www.freebirthdatelottery.com/login/")
 
-	// Login
+	// Deny all cookies etc. Sometimes the cloud function does not show this box, so times out.
+	cookiesBox, err := page.Timeout(time.Second * 7).Element("body > div.fc-consent-root")
+	if err == nil {
+		cookiesBox.MustRemove() // Remove the box in order to click the login button. Although the box will reappear I can still scrape the necessary data.
+	}
+
+	// Login.
 	page.MustElement("#user_login").MustInput(client.Email)
 	page.MustElement("#user_pass").MustInput(client.Password)
 	page.MustElement("#wp-submit").MustClick()
 	page.MustWaitDOMStable()
 
-	// Get ticket
+	// Get birthdate draw ticket.
 	page.MustNavigate("https://www.freebirthdatelottery.com/birthdate-draw/")
-	fullText := page.MustElement("#post-13 > div > div.resultbox.fullwidthbox.checkresults > h1:nth-child(2)").MustText()
+	fullText := page.MustElementR("h2", "Winning Birthdate").MustText()
+	winningTickets.BirthdateDraw = fullText[19:]
 
-	return fullText[len(fullText)-10:]
+	// Get survey draw ticket.
+	page.MustNavigate("https://www.freebirthdatelottery.com/survey-draw/")
+	fullText = page.MustElementR("h2", "Winning Birthdate").MustText()
+	winningTickets.SurveyDraw = fullText[19:]
+
+	return winningTickets
 }
 
 func freeBirthdateLotteryFormatResults(people []freeBirthdateLotteryPerson) string {
 	var output strings.Builder
-	output.WriteString("Matches        Main        Entry\n")
+	output.WriteString("Matches        Birthdate Draw        Survey Draw        Any       Entry\n")
 	for _, p := range people {
-		output.WriteString(fmt.Sprintf("%-15s%-13t%v\n", p.Name, p.Match, p.Entry))
+		output.WriteString(fmt.Sprintf("%-15s%-30t%-25t%-10t%v\n", p.Name, p.MatchBirthdateDraw, p.MatchSurveyDraw, p.MatchAny, p.Entry))
 	}
+	return output.String()
+}
+
+func freeBirthdateLotteryFormatTickets(tickets freeBirthdateLotteryTickets) string {
+	var output strings.Builder
+	output.WriteString("Tickets       Birthdate Draw        Survey Draw\n")
+	output.WriteString(fmt.Sprintf("%28s%23s\n", tickets.BirthdateDraw, tickets.SurveyDraw))
+
 	return output.String()
 }

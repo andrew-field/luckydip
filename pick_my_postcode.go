@@ -10,7 +10,6 @@ import (
 	"unicode"
 
 	"github.com/go-rod/rod"
-	"github.com/go-rod/stealth"
 )
 
 type pickMyPostcodePerson struct {
@@ -36,7 +35,7 @@ type pickMyPostcodeTickets struct {
 	Minidraw string
 }
 
-func PickMyPostcode() {
+func PickMyPostcode(page *rod.Page) {
 	// Create all clients.
 	people := []pickMyPostcodePerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Entry: "gu113nt"},
@@ -45,12 +44,6 @@ func PickMyPostcode() {
 		{Name: "James            ", Email: "j_field@hotmail.co.uk", Entry: "gu113nt"},
 		{Name: "Katherine", Email: "k_avery@outlook.com", Entry: "gu307da"},
 	}
-
-	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 180)
-
-	// An effort to avoid bot detection.
-	page := stealth.MustPage(browser)
 
 	// Load the London timezone.
 	loc, err := time.LoadLocation("Europe/London")

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-rod/rod"
-	"github.com/go-rod/stealth"
 )
 
 type euromillionsPerson struct {
@@ -25,7 +24,7 @@ type euromillionsTickets struct {
 	Weekly []string
 }
 
-func Euromillions() {
+func Euromillions(page *rod.Page) {
 	// Create all clients.
 	people := []euromillionsPerson{
 		{Name: "Andrew", Email: "andrew_field@hotmail.co.uk", Password: "4Rdod7o!T6Hjyp", Entry: []string{"6", "11", "18", "19", "25", "32"}},
@@ -34,12 +33,6 @@ func Euromillions() {
 		{Name: "James            ", Email: "j_field@hotmail.co.uk", Password: "A8&2WikQbA47a!", Entry: []string{"4", "5", "15", "24", "25", "26"}},
 		{Name: "Katherine", Email: "k_avery@outlook.com", Password: "T$tyfRx5&qkaoi", Entry: []string{"9", "13", "19", "23", "27", "28"}},
 	}
-
-	// Create browser
-	browser := rod.New().MustConnect().Trace(true).Timeout(time.Second * 200)
-
-	// An effort to avoid bot detection.
-	page := stealth.MustPage(browser)
 
 	var winningTickets euromillionsTickets
 
