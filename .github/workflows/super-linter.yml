@@ -17,5 +17,3 @@ jobs:
   lint:
     name: Lint code base
     uses: andrew-field/reusable-workflows/.github/workflows/super-linter.yml@master
-    env:
-      VALIDATE_JSON: false
