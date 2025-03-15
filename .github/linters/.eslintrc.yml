@@ -25,9 +25,8 @@ overrides:
     parser: jsonc-eslint-parser
     parserOptions:
       jsonSyntax: JSON
-    overrides:
-      rules: # This is the custom line I added. The default launch.json has useful comments.
-        no-comments: off
+    rules: # This is the custom line I added. The default launch.json has useful comments.
+      jsonc/no-json-comments: "off"
 
   # JSONC files
   - files:
