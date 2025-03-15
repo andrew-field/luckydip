@@ -25,11 +25,12 @@ overrides:
     parser: jsonc-eslint-parser
     parserOptions:
       jsonSyntax: JSON
+      ecmaVersion: latest
     rules: # This is the custom line I added. The default launch.json has useful comments.
-      jsonc/no-json-comments: "off"
-      no-json-comments: "off"
-      jsonc/no-comments: "off"
-      no-comments: "off"
+      "jsonc/no-json-comments": "off"
+      "no-json-comments": "off"
+      "jsonc/no-comments": "off"
+      "no-comments": "off"
 
   # JSONC files
   - files:
@@ -39,11 +40,12 @@ overrides:
     parser: jsonc-eslint-parser
     parserOptions:
       jsonSyntax: JSONC
+      ecmaVersion: latest
     rules: # This is the custom line I added. The default launch.json has useful comments.
-      jsonc/no-json-comments: "off"
-      no-json-comments: "off"
-      jsonc/no-comments: "off"
-      no-comments: "off"
+      "jsonc/no-json-comments": "off"
+      "no-json-comments": "off"
+      "jsonc/no-comments": "off"
+      "no-comments": "off"
 
   # JSON5 files
   - files:
